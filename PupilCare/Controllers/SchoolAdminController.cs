@@ -98,30 +98,41 @@ namespace PupilCare.Controllers
         public async Task<IActionResult> EnrollStudent(EnrollStudentViewModel model)
         {
             var user = await _userManager.GetUserAsync(User);
-            if (ModelState.IsValid && user?.SchoolId != null)
+            
+            if (!ModelState.IsValid)
             {
-                // Verify classroom belongs to this school
-                var classroom = await _context.Classrooms.FirstOrDefaultAsync(c => c.Id == model.ClassroomId && c.SchoolId == user.SchoolId.Value);
-                if (classroom != null)
-                {
-                    var student = new Student
-                    {
-                        Name = model.Name,
-                        Address = model.Address,
-                        Contact = model.Contact,
-                        Gender = model.Gender,
-                        DateOfBirth = model.DateOfBirth,
-                        ClassroomId = classroom.Id
-                    };
-                    _context.Students.Add(student);
-                    await _context.SaveChangesAsync();
-                    TempData["SuccessMessage"] = "Student enrolled successfully.";
-                }
-                else
-                {
-                    TempData["ErrorMessage"] = "Invalid classroom.";
-                }
+                TempData["ErrorMessage"] = "Validation failed: " + string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return RedirectToAction(nameof(Dashboard));
             }
+
+            if (user?.SchoolId == null)
+            {
+                TempData["ErrorMessage"] = "User or school information not found.";
+                return RedirectToAction(nameof(Dashboard));
+            }
+
+            // Verify classroom belongs to this school
+            var classroom = await _context.Classrooms.FirstOrDefaultAsync(c => c.Id == model.ClassroomId && c.SchoolId == user.SchoolId.Value);
+            if (classroom == null)
+            {
+                TempData["ErrorMessage"] = "Invalid classroom or classroom does not belong to your school.";
+                return RedirectToAction(nameof(Dashboard));
+            }
+
+            var student = new Student
+            {
+                Name = model.Name,
+                Address = model.Address,
+                Contact = model.Contact,
+                Gender = model.Gender,
+                DateOfBirth = model.DateOfBirth,
+                ClassroomId = classroom.Id
+            };
+            
+            _context.Students.Add(student);
+            await _context.SaveChangesAsync();
+            TempData["SuccessMessage"] = "Student enrolled successfully.";
+            
             return RedirectToAction(nameof(Dashboard));
         }
 
