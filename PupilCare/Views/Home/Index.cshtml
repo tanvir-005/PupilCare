@@ -1,0 +1,30 @@
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="hero-section" style="text-align: center; padding: 4rem 1rem; background-color: var(--color-primary-lighter); margin-bottom: 3rem;">
+    <h1 class="display-4" style="font-size: 2.5rem; color: var(--color-primary-dark); margin-bottom: 1rem;">Welcome to PupilCare</h1>
+    <p style="font-size: 1.2rem; max-width: 600px; margin: 0 auto; color: var(--color-text-main);">
+        The comprehensive decision support system for modern educational institutions. Manage your classrooms, teachers, and student records with ease.
+    </p>
+    <div style="margin-top: 2rem;">
+        <a asp-controller="Auth" asp-action="Register" class="btn btn-primary" style="font-size: 1.1rem; padding: 0.8rem 1.5rem;">Register Your School</a>
+    </div>
+</div>
+
+<div class="features-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+    <div class="feature-card" style="padding: 2rem; border: 1px solid var(--color-border); background: white;">
+        <h3 style="color: var(--color-primary);">School Management</h3>
+        <p>Register your institution and manage its details from a central admin dashboard. Super Admin approval ensures platform integrity.</p>
+    </div>
+    
+    <div class="feature-card" style="padding: 2rem; border: 1px solid var(--color-border); background: white;">
+        <h3 style="color: var(--color-primary);">Academic Structure</h3>
+        <p>Create classrooms, define grade levels, and generate secure credentials for your teaching staff.</p>
+    </div>
+    
+    <div class="feature-card" style="padding: 2rem; border: 1px solid var(--color-border); background: white;">
+        <h3 style="color: var(--color-primary);">Student Records</h3>
+        <p>Teachers can seamlessly record and track both academic and behavioral performances for specific students within their assigned classes.</p>
+    </div>
+</div>

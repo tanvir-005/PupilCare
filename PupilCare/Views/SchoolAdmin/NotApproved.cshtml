@@ -1,0 +1,25 @@
+@model PupilCare.Models.School
+
+@{
+    ViewData["Title"] = "Registration Pending";
+}
+
+<div class="auth-wrapper">
+    <div class="auth-card" style="text-align: center; max-width: 600px;">
+        <div class="auth-header">
+            <h2>Registration Pending Approval</h2>
+            <p style="color: var(--color-warning); font-weight: 600; font-size: 1.1rem; margin-top: 1rem;">
+                Your school, @Model.Name, is currently awaiting Super Admin approval.
+            </p>
+        </div>
+        
+        <p style="margin-bottom: 2rem; color: var(--color-text-main);">
+            You will be able to manage classrooms, teachers, and students once your registration has been approved. 
+            Please check back later or contact the system administrator.
+        </p>
+
+        <form asp-controller="Auth" asp-action="Logout" method="post">
+            <button type="submit" class="btn btn-secondary btn-block">Sign Out</button>
+        </form>
+    </div>
+</div>

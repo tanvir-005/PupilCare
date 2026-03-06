@@ -1,0 +1,299 @@
+/* 
+    PUPILCARE CUSTOM CSS
+    Design System: Flat, sharp edges (0px border-radius), no shadows.
+    Color Palette: Greenish-blue monochromatic scale.
+*/
+
+:root {
+    /* Color Palette */
+    --color-primary-dark: #0f4c5c;
+    --color-primary: #15616d;
+    --color-primary-light: #448b94;
+    --color-primary-lighter: #e1eff1;
+    
+    --color-bg-main: #f8fbfb;
+    --color-bg-surface: #ffffff;
+    
+    --color-text-main: #2b2d42;
+    --color-text-muted: #8d99ae;
+    --color-border: #d4dce3;
+    
+    --color-danger: #d90429;
+    --color-success: #2a9d8f;
+    --color-warning: #e9c46a;
+
+    --font-main: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* Reset & Basics */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-main);
+    background-color: var(--color-bg-main);
+    color: var(--color-text-main);
+    line-height: 1.6;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    font-size: 15px;
+}
+
+a {
+    color: var(--color-primary);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+a:hover {
+    color: var(--color-primary-dark);
+}
+
+h1, h2, h3, h4, h5, h6 {
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: var(--color-primary-dark);
+}
+
+p {
+    margin-bottom: 1rem;
+}
+
+/* Layout System */
+.container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+}
+
+.main-content {
+    flex: 1;
+    padding: 2rem 0;
+}
+
+/* Header & Nav */
+.app-header {
+    background-color: var(--color-bg-surface);
+    border-bottom: 1px solid var(--color-border);
+    padding: 1rem 0;
+}
+
+.header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.brand-logo {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-primary-dark);
+}
+
+.brand-logo:hover {
+    color: var(--color-primary);
+}
+
+.nav-list {
+    list-style: none;
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.nav-link {
+    color: var(--color-text-main);
+    font-weight: 500;
+}
+
+.nav-link:hover {
+    color: var(--color-primary);
+}
+
+/* Buttons */
+.btn {
+    display: inline-block;
+    padding: 0.6rem 1.2rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+    text-align: center;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+    /* STRICT FLAT ENFORCEMENT */
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+
+.btn-primary {
+    background-color: var(--color-primary);
+    color: white;
+    border-color: var(--color-primary);
+}
+
+.btn-primary:hover {
+    background-color: var(--color-primary-dark);
+    border-color: var(--color-primary-dark);
+    color: white;
+}
+
+.btn-secondary {
+    background-color: transparent;
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+.btn-secondary:hover {
+    background-color: var(--color-primary-lighter);
+}
+
+.btn-danger {
+    background-color: var(--color-danger);
+    color: white;
+}
+
+.btn-block {
+    display: block;
+    width: 100%;
+}
+
+/* Forms */
+.form-group {
+    margin-bottom: 1.25rem;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.4rem;
+    font-weight: 500;
+    color: var(--color-primary-dark);
+    font-size: 0.9rem;
+}
+
+.form-control {
+    display: block;
+    width: 100%;
+    padding: 0.6rem 0.8rem;
+    font-size: 0.95rem;
+    font-family: inherit;
+    color: var(--color-text-main);
+    background-color: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    /* STRICT FLAT ENFORCEMENT */
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    transition: border-color 0.2s;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--color-primary);
+}
+
+.form-control::placeholder {
+    color: var(--color-text-muted);
+    opacity: 0.6;
+}
+
+.text-danger {
+    color: var(--color-danger);
+    font-size: 0.85rem;
+    display: block;
+    margin-top: 0.25rem;
+}
+
+/* Authentication Cards */
+.auth-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 180px); /* rough header+footer height */
+}
+
+.auth-card {
+    background-color: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    padding: 2.5rem;
+    width: 100%;
+    max-width: 450px;
+}
+
+.register-card {
+    max-width: 850px;
+}
+
+.auth-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.auth-header h2 {
+    margin-bottom: 0.5rem;
+}
+
+.auth-header p {
+    color: var(--color-text-muted);
+    margin-bottom: 0;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5rem;
+}
+
+.form-row h4 {
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--color-primary-lighter);
+}
+
+.checkbox-group label {
+    display: flex;
+    align-items: center;
+    font-weight: normal;
+    cursor: pointer;
+    gap: 0.5rem;
+}
+
+.auth-footer {
+    margin-top: 1.5rem;
+    text-align: center;
+    font-size: 0.9rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--color-border);
+}
+
+/* Validation styling override */
+.input-validation-error {
+    border-color: var(--color-danger);
+}
+
+/* Footer */
+.app-footer {
+    background-color: var(--color-bg-surface);
+    border-top: 1px solid var(--color-border);
+    padding: 1.5rem 0;
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+}
+
+.mt-4 { margin-top: 1.5rem; }
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .auth-card {
+        padding: 1.5rem;
+    }
+}

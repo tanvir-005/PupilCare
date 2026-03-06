@@ -1,0 +1,63 @@
+@model PupilCare.Models.Classroom
+
+@{
+    ViewData["Title"] = $"Overview - {Model.Name}";
+}
+
+<div class="dashboard-header" style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: flex-end;">
+    <div>
+        <h2>@Model.Name Overview</h2>
+        <p>Grade Level: @Model.GradeLevel | Total Students: @Model.Students.Count</p>
+    </div>
+    <a asp-action="Dashboard" class="btn btn-secondary" style="padding: 0.5rem 1rem;">&larr; Back to Dashboard</a>
+</div>
+
+<div class="card my-4">
+    <div class="card-header" style="background-color: var(--color-primary-lighter); padding: 1rem;">
+        <h4 style="margin: 0; color: var(--color-primary-dark);">Enrolled Students & Records</h4>
+    </div>
+    <div class="card-body" style="padding: 1.5rem; border: 1px solid var(--color-primary-lighter); border-top: none;">
+        @if (!Model.Students.Any())
+        {
+            <p class="text-muted">No students enrolled in this classroom.</p>
+        }
+        else
+        {
+            <table class="table" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="border-bottom: 2px solid var(--color-border); text-align: left;">
+                        <th style="padding: 0.75rem;">Name</th>
+                        <th style="padding: 0.75rem;">Date of Birth</th>
+                        <th style="padding: 0.75rem;">Contact</th>
+                        <th style="padding: 0.75rem;">Recorded Incidents</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var student in Model.Students.OrderBy(s => s.Name))
+                    {
+                        <tr style="border-bottom: 1px solid var(--color-border);">
+                            <td style="padding: 0.75rem;">
+                                <strong>@student.Name</strong>
+                                <span style="font-size: 0.8rem; color: var(--color-text-muted); display: block;">@student.Gender</span>
+                            </td>
+                            <td style="padding: 0.75rem;">@student.DateOfBirth.ToShortDateString()</td>
+                            <td style="padding: 0.75rem;">
+                                @if(!string.IsNullOrEmpty(student.Contact)) { <span>@student.Contact</span> } else { <span class="text-muted">N/A</span> }
+                            </td>
+                            <td style="padding: 0.75rem;">
+                                @if (student.Records != null && student.Records.Any())
+                                {
+                                    <span style="font-weight: 600; color: var(--color-primary);">@student.Records.Count records</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">No records</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>

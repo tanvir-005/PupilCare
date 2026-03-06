@@ -1,0 +1,102 @@
+@model IEnumerable<PupilCare.Models.School>
+
+@{
+    ViewData["Title"] = "SuperAdmin Dashboard";
+}
+
+<div class="dashboard-header">
+    <h2>Super Admin Dashboard</h2>
+    <p>Manage all registered schools across the PupilCare platform.</p>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success" style="padding: 1rem; background-color: var(--color-success); color: white; margin-bottom: 1.5rem;">
+        @TempData["SuccessMessage"]
+    </div>
+}
+
+<div class="card my-4">
+    <div class="card-header" style="background-color: var(--color-primary-lighter); padding: 1rem;">
+        <h4 style="margin: 0; color: var(--color-primary-dark);">Pending Approvals</h4>
+    </div>
+    <div class="card-body" style="padding: 1.5rem; border: 1px solid var(--color-primary-lighter); border-top: none;">
+        @{
+            var pendingSchools = Model.Where(s => !s.IsApproved).ToList();
+        }
+        @if (!pendingSchools.Any())
+        {
+            <p class="text-muted">No pending school registrations at this time.</p>
+        }
+        else
+        {
+            <table class="table" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="border-bottom: 2px solid var(--color-border); text-align: left;">
+                        <th style="padding: 0.75rem;">School Name</th>
+                        <th style="padding: 0.75rem;">Address</th>
+                        <th style="padding: 0.75rem;">Contact</th>
+                        <th style="padding: 0.75rem; text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var school in pendingSchools)
+                    {
+                        <tr style="border-bottom: 1px solid var(--color-border);">
+                            <td style="padding: 0.75rem;"><strong>@school.Name</strong></td>
+                            <td style="padding: 0.75rem;">@school.Address</td>
+                            <td style="padding: 0.75rem;">@school.Contact</td>
+                            <td style="padding: 0.75rem; text-align: right;">
+                                <form method="post" style="display:inline;">
+                                    <button type="submit" asp-action="ApproveSchool" asp-route-id="@school.Id" class="btn btn-primary" style="padding: 0.4rem 0.8rem; margin-right: 0.5rem;">Approve</button>
+                                </form>
+                                <form method="post" style="display:inline;">
+                                    <button type="submit" asp-action="RejectSchool" asp-route-id="@school.Id" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; color: var(--color-danger); border-color: var(--color-danger);">Reject</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>
+
+<div class="card my-4 mt-4" style="margin-top: 2rem;">
+    <div class="card-header" style="background-color: var(--color-primary-lighter); padding: 1rem;">
+        <h4 style="margin: 0; color: var(--color-primary-dark);">Approved Schools</h4>
+    </div>
+    <div class="card-body" style="padding: 1.5rem; border: 1px solid var(--color-primary-lighter); border-top: none;">
+        @{
+            var approvedSchools = Model.Where(s => s.IsApproved).ToList();
+        }
+        @if (!approvedSchools.Any())
+        {
+            <p class="text-muted">No approved schools yet.</p>
+        }
+        else
+        {
+            <table class="table" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="border-bottom: 2px solid var(--color-border); text-align: left;">
+                        <th style="padding: 0.75rem;">ID</th>
+                        <th style="padding: 0.75rem;">School Name</th>
+                        <th style="padding: 0.75rem;">Address</th>
+                        <th style="padding: 0.75rem;">Contact</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var school in approvedSchools)
+                    {
+                        <tr style="border-bottom: 1px solid var(--color-border);">
+                            <td style="padding: 0.75rem;">@school.Id</td>
+                            <td style="padding: 0.75rem;"><strong>@school.Name</strong></td>
+                            <td style="padding: 0.75rem;">@school.Address</td>
+                            <td style="padding: 0.75rem;">@school.Contact</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>

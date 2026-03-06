@@ -1,0 +1,108 @@
+@model IEnumerable<PupilCare.Models.Classroom>
+
+@{
+    ViewData["Title"] = "Teacher Dashboard";
+}
+
+<div class="dashboard-header" style="margin-bottom: 2rem;">
+    <h2>Teacher Dashboard</h2>
+    <p>View your classes and record student academic and behavioral performance.</p>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success" style="padding: 1rem; background-color: var(--color-success); color: white; margin-bottom: 1.5rem;">
+        @TempData["SuccessMessage"]
+    </div>
+}
+
+<div class="form-row" style="grid-template-columns: 1fr; gap: 2rem;">
+    @if (!Model.Any())
+    {
+        <p class="text-muted">No classrooms have been assigned or created for your school yet.</p>
+    }
+    else
+    {
+        foreach (var classroom in Model)
+        {
+            <div class="card" style="margin-bottom: 2rem;">
+                <div class="card-header" style="background-color: var(--color-primary-lighter); padding: 1rem;">
+                    <h4 style="margin: 0; color: var(--color-primary-dark);">@classroom.Name <span style="font-size: 0.9rem; font-weight: 500; color: var(--color-text-muted); margin-left: 1rem;">@classroom.GradeLevel</span></h4>
+                </div>
+
+                <div class="card-body" style="padding: 1.5rem; border: 1px solid var(--color-border); border-top: none;">
+                    @if (!classroom.Students.Any())
+                    {
+                        <p class="text-muted" style="margin: 0;">No students enrolled in this class yet.</p>
+                    }
+                    else
+                    {
+                        <table class="table" style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid var(--color-border); text-align: left;">
+                                    <th style="padding: 0.75rem;">Student Name</th>
+                                    <th style="padding: 0.75rem;">Gender</th>
+                                    <th style="padding: 0.75rem;">Recent Records (Total: 0)</th>
+                                    <th style="padding: 0.75rem; text-align: right;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var student in classroom.Students)
+                                {
+                                    <tr style="border-bottom: 1px solid var(--color-border);">
+                                        <td style="padding: 0.75rem;"><strong>@student.Name</strong></td>
+                                        <td style="padding: 0.75rem;">@student.Gender</td>
+                                        <td style="padding: 0.75rem;">
+                                            @if (student.Records != null && student.Records.Any())
+                                            {
+                                                var recent = student.Records.OrderByDescending(r => r.CreatedAt).FirstOrDefault();
+                                                <span style="font-size: 0.85rem; padding: 0.2rem 0.5rem; background-color: var(--color-primary-lighter); color: var(--color-primary-dark); font-weight: 500;">@recent.Type</span>
+                                                <span style="font-size: 0.85rem; color: var(--color-text-muted);">@recent.CreatedAt.ToShortDateString()</span>
+                                                <div style="font-size: 0.85rem; font-style: italic; margin-top: 0.3rem;">"@recent.Text"</div>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted" style="font-size: 0.85rem;">No records yet</span>
+                                            }
+                                        </td>
+                                        <td style="padding: 0.75rem; text-align: right;">
+                                            <button type="button" class="btn btn-primary" style="font-size: 0.85rem; padding: 0.4rem 0.8rem;" onclick="document.getElementById('addRecordForm_@student.Id').style.display='block'">Add Record</button>
+                                        </td>
+                                    </tr>
+                                    <tr id="addRecordForm_@student.Id" style="display:none; background-color: #fafBfb;">
+                                        <td colspan="4" style="padding: 1.5rem; border-bottom: 1px solid var(--color-border);">
+                                            <form method="post" asp-action="AddRecord" style="max-width: 600px; margin: 0 auto;">
+                                                <h5 style="margin-bottom: 1rem; color: var(--color-primary);">New Record for @student.Name</h5>
+                                                <input type="hidden" name="StudentId" value="@student.Id" />
+                                                
+                                                <div class="form-group">
+                                                    <label>Record Type</label>
+                                                    <select name="Type" class="form-control" required style="padding: 0.6rem 0.8rem;">
+                                                        <option value="">Select Type...</option>
+                                                        <option value="Academic">Academic Performance</option>
+                                                        <option value="Behavioral">Behavioral Observation</option>
+                                                        <option value="Attendance">Attendance/Punctuality</option>
+                                                        <option value="Extracurricular">Extracurricular Activity</option>
+                                                        <option value="Other">Other</option>
+                                                    </select>
+                                                </div>
+                                                
+                                                <div class="form-group">
+                                                    <label>Observation Details</label>
+                                                    <textarea name="Text" class="form-control" rows="3" required placeholder="Enter detailed observation..."></textarea>
+                                                </div>
+                                                
+                                                <button type="submit" class="btn btn-success">Save Record</button>
+                                                <button type="button" class="btn btn-secondary" onclick="document.getElementById('addRecordForm_@student.Id').style.display='none'">Cancel</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                </div>
+            </div>
+        }
+    }
+</div>
