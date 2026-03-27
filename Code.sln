@@ -4,7 +4,7 @@ VisualStudioVersion = 17.5.2.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "PupilCare", "PupilCare", "{5A72CFB0-EC46-83CD-22FE-E0C99F6F8B6E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PupilCare", "PupilCare\PupilCare\PupilCare.csproj", "{686FA91D-FB0A-3F53-E18C-D876F140A186}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PupilCare", "PupilCare\PupilCare.csproj", "{686FA91D-FB0A-3F53-E18C-D876F140A186}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
