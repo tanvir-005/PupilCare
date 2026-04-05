@@ -8,17 +8,15 @@ namespace PupilCare.Controllers
     {
         public IActionResult Index()
         {
-            if (User.Identity.IsAuthenticated)
-            {
-                if (User.IsInRole("SuperAdmin"))
-                    return RedirectToAction("Dashboard", "SuperAdmin");
-                if (User.IsInRole("SchoolAdmin"))
-                    return RedirectToAction("Dashboard", "SchoolAdmin");
-                if (User.IsInRole("Teacher"))
-                    return RedirectToAction("Dashboard", "Teacher");
-            }
             return View();
         }
+
+        public IActionResult About() => View();
+        public IActionResult Services() => View();
+        public IActionResult Career() => View();
+        public IActionResult Partners() => View();
+        public IActionResult PrivacyPolicy() => View();
+        public IActionResult TermsOfService() => View();
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()

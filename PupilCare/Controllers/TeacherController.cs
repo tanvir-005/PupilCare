@@ -58,5 +58,34 @@ namespace PupilCare.Controllers
             }
             return RedirectToAction(nameof(Dashboard));
         }
+
+        [HttpPost]
+        public async Task<IActionResult> EditRecord(int id, string type, string text)
+        {
+            var record = await _context.Records.FindAsync(id);
+            var user = await _userManager.GetUserAsync(User);
+            if (record != null && record.TeacherId == user.Id)
+            {
+                record.Type = type;
+                record.Text = text;
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Record updated.";
+            }
+            return RedirectToAction(nameof(Dashboard));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteRecord(int id)
+        {
+            var record = await _context.Records.FindAsync(id);
+            var user = await _userManager.GetUserAsync(User);
+            if (record != null && record.TeacherId == user.Id)
+            {
+                _context.Records.Remove(record);
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Record deleted.";
+            }
+            return RedirectToAction(nameof(Dashboard));
+        }
     }
 }

@@ -8,6 +8,8 @@ namespace PupilCare.Models
     {
         public int Id { get; set; }
         [Required]
+        public string StudentId { get; set; } // User defined ID avoiding duplicate
+        [Required]
         public string Name { get; set; }
         public string Address { get; set; }
         public string Contact { get; set; }
