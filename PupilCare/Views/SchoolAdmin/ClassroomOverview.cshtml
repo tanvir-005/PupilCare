@@ -9,7 +9,10 @@
         <h2>@Model.Name Overview</h2>
         <p>Grade Level: @Model.GradeLevel | Total Students: @Model.Students.Count</p>
     </div>
-    <a asp-action="Dashboard" class="btn btn-secondary" style="padding: 0.5rem 1rem;">&larr; Back to Dashboard</a>
+    <div style="display: flex; gap: 1rem;">
+        <a asp-action="ExportClassJson" asp-route-id="@Model.Id" class="btn btn-primary" target="_blank" style="padding: 0.5rem 1rem;">Export Class JSON</a>
+        <a asp-action="Dashboard" class="btn btn-secondary" style="padding: 0.5rem 1rem;">&larr; Back to Dashboard</a>
+    </div>
 </div>
 
 <div class="card my-4">
@@ -50,6 +53,7 @@
                                 </button>
                             </td>
                             <td style="padding: 0.75rem; text-align: right; display: flex; gap: 0.5rem; justify-content: flex-end;">
+                                <a asp-action="ExportStudentJson" asp-route-id="@student.Id" class="btn btn-outline-info btn-sm" target="_blank" style="font-size: 0.8rem; padding: 0.2rem 0.5rem; text-decoration: none;">Export JSON</a>
                                 <button type="button" class="btn btn-outline-primary btn-sm" style="font-size: 0.8rem;" onclick="document.getElementById('editStudent_@student.Id').style.display='table-row'">Edit</button>
                                 <form method="post" asp-action="DeleteStudent" asp-route-id="@student.Id" onsubmit="return confirm('Delete this student?');">
                                     <button type="submit" class="btn btn-outline-danger btn-sm" style="font-size: 0.8rem;">Delete</button>

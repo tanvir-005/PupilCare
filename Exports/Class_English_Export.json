@@ -1,0 +1,46 @@
+{
+  "ClassName": "English",
+  "GradeLevel": "Class Seven",
+  "Students": [
+    {
+      "StudentId": "22203097",
+      "Name": "Student 1",
+      "Gender": "Male",
+      "DateOfBirth": "2002-05-19",
+      "Address": "Tangail",
+      "Contact": "01704476935",
+      "Records": [
+        {
+          "Type": "Academic",
+          "Text": "sdfsdfsdfsf",
+          "CreatedAt": "2026-04-14 10:11:18"
+        },
+        {
+          "Type": "Academic",
+          "Text": "kjlkjkljljl",
+          "CreatedAt": "2026-04-14 10:11:27"
+        },
+        {
+          "Type": "Attendance",
+          "Text": "dfsdfdfddfdf",
+          "CreatedAt": "2026-04-14 10:11:33"
+        }
+      ]
+    },
+    {
+      "StudentId": "22203098",
+      "Name": "Student 2",
+      "Gender": "Male",
+      "DateOfBirth": "2003-02-12",
+      "Address": "Hbgnj",
+      "Contact": "01890065004",
+      "Records": [
+        {
+          "Type": "Behavioral",
+          "Text": "sdfsdfsdfs",
+          "CreatedAt": "2026-04-14 10:11:39"
+        }
+      ]
+    }
+  ]
+}

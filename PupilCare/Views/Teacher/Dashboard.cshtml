@@ -26,8 +26,9 @@
         foreach (var classroom in Model)
         {
             <div class="card" style="margin-bottom: 2rem;">
-                <div class="card-header" style="background-color: var(--color-primary-lighter); padding: 1rem;">
+                <div class="card-header" style="background-color: var(--color-primary-lighter); padding: 1rem; display: flex; justify-content: space-between; align-items: center;">
                     <h4 style="margin: 0; color: var(--color-primary-dark);">@classroom.Name <span style="font-size: 0.9rem; font-weight: 500; color: var(--color-text-muted); margin-left: 1rem;">@classroom.GradeLevel</span></h4>
+                    <a asp-action="ExportClassJson" asp-route-id="@classroom.Id" class="btn btn-sm btn-primary" target="_blank">Export Class JSON</a>
                 </div>
 
                 <div class="card-body" style="padding: 1.5rem; border: 1px solid var(--color-border); border-top: none;">
@@ -60,7 +61,8 @@
                                                 Toggle @(student.Records?.Count ?? 0) Records
                                             </button>
                                         </td>
-                                        <td style="padding: 0.75rem; text-align: right;">
+                                        <td style="padding: 0.75rem; text-align: right; display: flex; gap: 0.5rem; justify-content: flex-end;">
+                                            <a asp-action="ExportStudentJson" asp-route-id="@student.Id" class="btn btn-outline-info btn-sm" target="_blank" style="font-size: 0.8rem; padding: 0.25rem 0.5rem; text-decoration: none;">Export JSON</a>
                                             <button type="button" class="btn btn-primary btn-sm" onclick="document.getElementById('records_@student.Id').style.display='table-row'; document.getElementById('addRecord_@student.Id').style.display='block';">Add Record</button>
                                         </td>
                                     </tr>
