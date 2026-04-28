@@ -1,0 +1,65 @@
+@model PupilCare.ViewModels.CreateSubscriptionPlanViewModel
+@{
+    ViewData["Title"] = "Create Subscription Plan";
+}
+
+<div class="dashboard-container">
+    <div class="panel form-panel">
+        <div class="panel-header">
+            <h4 class="panel-title">@ViewData["Title"]</h4>
+        </div>
+        <div class="panel-body">
+            <form asp-action="CreatePlan" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                
+                <div class="form-group">
+                    <label asp-for="Name">Plan Name</label>
+                    <input asp-for="Name" class="form-control" />
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label asp-for="Price">Price (৳)</label>
+                        <input asp-for="Price" class="form-control" type="number" step="0.01" />
+                        <span asp-validation-for="Price" class="text-danger"></span>
+                    </div>
+                    <div class="form-group checkbox-group">
+                        <label asp-for="IsActive">
+                            <input asp-for="IsActive" type="checkbox" />
+                            Is Active
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label asp-for="DurationDays">Duration (Days)</label>
+                        <input asp-for="DurationDays" class="form-control" type="number" />
+                        <span asp-validation-for="DurationDays" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="DurationMinutes">Duration (Minutes) - for testing</label>
+                        <input asp-for="DurationMinutes" class="form-control" type="number" />
+                        <span asp-validation-for="DurationMinutes" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Description">Description</label>
+                    <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                </div>
+
+                <div class="form-actions">
+                    <a asp-action="SubscriptionPlans" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Create Plan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,86 @@
+@model PupilCare.Models.Student
+@{
+    ViewData["Title"] = "Student Profile";
+}
+
+<div class="dashboard-container">
+    <div class="dashboard-header split-header">
+        <h2>@Model.Name</h2>
+        <a asp-action="Students" class="btn btn-secondary">Back</a>
+    </div>
+
+    <div class="details-grid">
+        <div class="panel">
+            <div class="panel-header"><h5 class="panel-title">Profile</h5></div>
+            <div class="panel-body">
+                <table class="info-table">
+                    <tr><th>ID</th><td>@Model.StudentId</td></tr>
+                    <tr><th>Class</th><td>@Model.ClassSection.ClassLevel.Name</td></tr>
+                    <tr><th>Section</th><td>@Model.ClassSection.Name</td></tr>
+                    <tr><th>Guardian</th><td>@Model.GuardianName @Model.GuardianContact</td></tr>
+                    <tr><th>Contact</th><td>@Model.Contact</td></tr>
+                </table>
+                <form asp-action="ChangeSection" method="post" class="inline-form mt-4">
+                    <input type="hidden" name="StudentId" value="@Model.Id" />
+                    <select name="NewSectionId" class="form-control w-auto">
+                        @foreach (var sec in Model.ClassSection.ClassLevel.Sections.OrderBy(s => s.Name))
+                        {
+                            <option value="@sec.Id">@sec.Name</option>
+                        }
+                    </select>
+                    <button class="btn btn-secondary" type="submit">Change Section</button>
+                </form>
+            </div>
+        </div>
+        <div class="panel">
+            <div class="panel-header"><h5 class="panel-title">Add Comment</h5></div>
+            <div class="panel-body">
+                <form asp-action="AddComment" method="post">
+                    <input type="hidden" name="StudentId" value="@Model.Id" />
+                    <input type="hidden" name="ClassSectionId" value="@Model.ClassSectionId" />
+                    <div class="form-group">
+                        <label>Type</label>
+                        <select name="CommentType" class="form-control"><option>Behavior</option><option>Result</option><option>Attendance</option><option>Financial</option><option>General</option></select>
+                    </div>
+                    <div class="form-group"><label>Comment</label><textarea name="Text" class="form-control" required></textarea></div>
+                    <button class="btn btn-primary" type="submit">Save Comment</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel">
+            <div class="panel-header"><h5 class="panel-title">Comments</h5></div>
+            <div class="panel-body">
+                @foreach (var comment in Model.Comments.OrderByDescending(c => c.CreatedAt))
+                {
+                    <p><strong>@comment.CommentType:</strong> @comment.Text<br /><span class="text-muted">@comment.CreatedBy.FullName - @comment.CreatedAt.ToLocalTime()</span></p>
+                }
+            </div>
+    </div>
+
+    <div class="details-grid">
+        <div class="panel">
+            <div class="panel-header"><h5 class="panel-title">Marks</h5></div>
+            <div class="panel-body-nopad">
+                <table class="data-table"><thead><tr><th>Exam</th><th>Subject</th><th>Marks</th></tr></thead><tbody>
+                @foreach (var mark in Model.ExamMarks.OrderBy(m => m.Exam.Name))
+                {
+                    <tr><td>@mark.Exam.Name</td><td>@mark.Subject.Name</td><td>@mark.MarksObtained / @mark.Exam.FullMark</td></tr>
+                }
+                </tbody></table>
+            </div>
+        </div>
+        <div class="panel">
+            <div class="panel-header"><h5 class="panel-title">Attendance</h5></div>
+            <div class="panel-body-nopad">
+                <table class="data-table"><thead><tr><th>Subject</th><th>Date</th><th>Status</th></tr></thead><tbody>
+                @foreach (var record in Model.AttendanceRecords.OrderByDescending(a => a.Date).Take(30))
+                {
+                    <tr><td>@record.Subject.Name</td><td>@record.Date.ToString("dd MMM yyyy")</td><td>@(record.IsPresent ? "Present" : "Absent")</td></tr>
+                }
+                </tbody></table>
+            </div>
+        </div>
+    </div>
+</div>

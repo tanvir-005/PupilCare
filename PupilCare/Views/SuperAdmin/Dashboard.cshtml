@@ -1,102 +1,101 @@
 @model IEnumerable<PupilCare.Models.School>
-
 @{
-    ViewData["Title"] = "SuperAdmin Dashboard";
+    ViewData["Title"] = "Super Admin Dashboard";
 }
 
-<div class="dashboard-header">
-    <h2>Super Admin Dashboard</h2>
-    <p>Manage all registered schools across the PupilCare platform.</p>
-</div>
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h2>@ViewData["Title"]</h2>
+    </div>
 
-@if (TempData["SuccessMessage"] != null)
-{
-    <div class="alert alert-success" style="padding: 1rem; background-color: var(--color-success); color: white; margin-bottom: 1.5rem;">
-        @TempData["SuccessMessage"]
-    </div>
-}
+    <div class="dashboard-layout">
+        <!-- Left Side: Summary Cards -->
+        <div class="dashboard-sidebar">
+            <div class="stat-card stat-primary">
+                <div class="stat-content">
+                    <h6 class="stat-title">Total Schools</h6>
+                    <h2 class="stat-value">@ViewBag.TotalSchools</h2>
+                </div>
+            </div>
+            <div class="stat-card stat-success">
+                <div class="stat-content">
+                    <h6 class="stat-title">Approved</h6>
+                    <h2 class="stat-value">@ViewBag.ApprovedSchools</h2>
+                </div>
+            </div>
+            <div class="stat-card stat-warning">
+                <div class="stat-content">
+                    <h6 class="stat-title">Pending</h6>
+                    <h2 class="stat-value">@ViewBag.PendingSchools</h2>
+                </div>
+            </div>
+            <div class="stat-card stat-info">
+                <div class="stat-content">
+                    <h6 class="stat-title">Active Sub</h6>
+                    <h2 class="stat-value">@ViewBag.ActiveSubscriptions</h2>
+                </div>
+            </div>
+        </div>
 
-<div class="card my-4">
-    <div class="card-header" style="background-color: var(--color-primary-lighter); padding: 1rem;">
-        <h4 style="margin: 0; color: var(--color-primary-dark);">Pending Approvals</h4>
-    </div>
-    <div class="card-body" style="padding: 1.5rem; border: 1px solid var(--color-primary-lighter); border-top: none;">
-        @{
-            var pendingSchools = Model.Where(s => !s.IsApproved).ToList();
-        }
-        @if (!pendingSchools.Any())
-        {
-            <p class="text-muted">No pending school registrations at this time.</p>
-        }
-        else
-        {
-            <table class="table" style="width: 100%; border-collapse: collapse;">
-                <thead>
-                    <tr style="border-bottom: 2px solid var(--color-border); text-align: left;">
-                        <th style="padding: 0.75rem;">School Name</th>
-                        <th style="padding: 0.75rem;">Address</th>
-                        <th style="padding: 0.75rem;">Contact</th>
-                        <th style="padding: 0.75rem; text-align: right;">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var school in pendingSchools)
-                    {
-                        <tr style="border-bottom: 1px solid var(--color-border);">
-                            <td style="padding: 0.75rem;"><strong>@school.Name</strong></td>
-                            <td style="padding: 0.75rem;">@school.Address</td>
-                            <td style="padding: 0.75rem;">@school.Contact</td>
-                            <td style="padding: 0.75rem; text-align: right;">
-                                <form method="post" style="display:inline;">
-                                    <button type="submit" asp-action="ApproveSchool" asp-route-id="@school.Id" class="btn btn-primary" style="padding: 0.4rem 0.8rem; margin-right: 0.5rem;">Approve</button>
-                                </form>
-                                <form method="post" style="display:inline;">
-                                    <button type="submit" asp-action="RejectSchool" asp-route-id="@school.Id" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; color: var(--color-danger); border-color: var(--color-danger);">Reject</button>
-                                </form>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        }
-    </div>
-</div>
-
-<div class="card my-4 mt-4" style="margin-top: 2rem;">
-    <div class="card-header" style="background-color: var(--color-primary-lighter); padding: 1rem;">
-        <h4 style="margin: 0; color: var(--color-primary-dark);">Approved Schools</h4>
-    </div>
-    <div class="card-body" style="padding: 1.5rem; border: 1px solid var(--color-primary-lighter); border-top: none;">
-        @{
-            var approvedSchools = Model.Where(s => s.IsApproved).ToList();
-        }
-        @if (!approvedSchools.Any())
-        {
-            <p class="text-muted">No approved schools yet.</p>
-        }
-        else
-        {
-            <table class="table" style="width: 100%; border-collapse: collapse;">
-                <thead>
-                    <tr style="border-bottom: 2px solid var(--color-border); text-align: left;">
-                        <th style="padding: 0.75rem;">ID</th>
-                        <th style="padding: 0.75rem;">School Name</th>
-                        <th style="padding: 0.75rem;">Address</th>
-                        <th style="padding: 0.75rem;">Contact</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var school in approvedSchools)
-                    {
-                        <tr style="border-bottom: 1px solid var(--color-border);">
-                            <td style="padding: 0.75rem;">@school.Id</td>
-                            <td style="padding: 0.75rem;"><strong>@school.Name</strong></td>
-                            <td style="padding: 0.75rem;">@school.Address</td>
-                            <td style="padding: 0.75rem;">@school.Contact</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        }
+        <!-- Right Side: Schools Table -->
+        <div class="dashboard-main">
+            <div class="panel">
+                <div class="panel-header">
+                    <h5 class="panel-title">All Schools</h5>
+                    <div class="panel-actions">
+                        <a asp-action="Dashboard" class="btn btn-secondary">Manage Schools</a>
+                        <a asp-action="SubscriptionPlans" class="btn btn-primary">Manage Plans</a>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th class="col-school">School Name</th>
+                                    <th>Status</th>
+                                    <th>Subscription</th>
+                                    <th class="text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model != null && Model.Any())
+                                {
+                                    @foreach(var school in Model)
+                                    {
+                                        <tr class="clickable-row" onclick="window.location.href='@Url.Action("SchoolDetails", new { id = school.Id })'">
+                                            <td class="school-name">@school.Name</td>
+                                            <td>
+                                                @if (school.IsApproved) { <span class="status-badge status-approved">Approved</span> }
+                                                else { <span class="status-badge status-pending">Pending</span> }
+                                            </td>
+                                            <td>
+                                                @if (school.SubscriptionExpiry.HasValue && school.SubscriptionExpiry > DateTime.UtcNow)
+                                                {
+                                                    <span class="sub-status sub-active">Active (@((school.SubscriptionExpiry.Value - DateTime.UtcNow).Days) days)</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="sub-status sub-expired">Expired/None</span>
+                                                }
+                                            </td>
+                                            <td class="text-right">
+                                                <a asp-action="SchoolDetails" asp-route-id="@school.Id" class="btn btn-secondary" onclick="event.stopPropagation();">Details &rarr;</a>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="4" class="empty-state">No schools found.</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>

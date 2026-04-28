@@ -1,0 +1,53 @@
+@model IEnumerable<PupilCare.Models.ClassLevel>
+@{
+    ViewData["Title"] = "Classes";
+}
+
+<div class="dashboard-container">
+    <div class="dashboard-header split-header">
+        <h2>Classes</h2>
+        <a asp-action="CreateClass" class="btn btn-primary">Create Class</a>
+    </div>
+
+    @foreach (var cls in Model)
+    {
+        <div class="panel">
+            <div class="panel-header">
+                <h5 class="panel-title">@cls.Name</h5>
+                <span class="text-muted">Order @cls.Order</span>
+            </div>
+            <div class="panel-body">
+                <div class="details-grid">
+                    <div>
+                        <h5>Sections</h5>
+                        <ul class="list-view">
+                            @foreach (var sec in cls.Sections.OrderBy(s => s.Name))
+                            {
+                                <li class="list-item">Section @sec.Name</li>
+                            }
+                        </ul>
+                        <form asp-action="CreateSection" method="post" class="inline-form mt-4">
+                            <input type="hidden" name="ClassLevelId" value="@cls.Id" />
+                            <input name="Name" class="form-control w-auto" placeholder="New section" required />
+                            <button class="btn btn-secondary" type="submit">Add Section</button>
+                        </form>
+                    </div>
+                    <div>
+                        <h5>Subjects</h5>
+                        <ul class="list-view">
+                            @foreach (var subject in cls.Subjects.OrderBy(s => s.Name))
+                            {
+                                <li class="list-item">@subject.Name</li>
+                            }
+                        </ul>
+                        <form asp-action="CreateSubject" method="post" class="inline-form mt-4">
+                            <input type="hidden" name="ClassLevelId" value="@cls.Id" />
+                            <input name="Name" class="form-control w-auto" placeholder="New subject" required />
+                            <button class="btn btn-secondary" type="submit">Add Subject</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>

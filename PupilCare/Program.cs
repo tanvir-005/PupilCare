@@ -5,14 +5,16 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using PupilCare.Data;
 using PupilCare.Models;
+using PupilCare.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// ── Database (In-Memory) ──────────────────────────────────────────────────────
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseInMemoryDatabase("PupilCareDb"));
 
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options => 
+// ── Identity ──────────────────────────────────────────────────────────────────
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
     options.SignIn.RequireConfirmedAccount = false;
     options.Password.RequireDigit = false;
@@ -31,17 +33,22 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.AccessDeniedPath = "/Auth/AccessDenied";
 });
 
+// ── Application Services ──────────────────────────────────────────────────────
+builder.Services.AddScoped<IAiInsightService, GeminiInsightService>();
+builder.Services.AddScoped<IPaymentService, SslCommerzPaymentService>();
+builder.Services.AddHttpClient();
+
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 
+// ── Seed Data ─────────────────────────────────────────────────────────────────
 using (var scope = app.Services.CreateScope())
 {
-    var services = scope.ServiceProvider;
-    await DbSeeder.SeedRolesAndSuperAdminAsync(services);
+    await DbSeeder.SeedAsync(scope.ServiceProvider);
 }
 
-// Configure the HTTP request pipeline.
+// ── Middleware Pipeline ───────────────────────────────────────────────────────
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
@@ -50,10 +57,8 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseRouting();
-
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapStaticAssets();
 
 app.MapControllerRoute(
@@ -62,4 +67,3 @@ app.MapControllerRoute(
     .WithStaticAssets();
 
 app.Run();
-

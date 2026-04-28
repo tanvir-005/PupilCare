@@ -1,154 +1,45 @@
-@model IEnumerable<PupilCare.Models.Classroom>
-
+@model IEnumerable<PupilCare.Models.TeacherAssignment>
 @{
     ViewData["Title"] = "Teacher Dashboard";
+    var classTeacherFor = ViewBag.ClassTeacherFor as List<PupilCare.Models.ClassLevel> ?? new();
 }
 
-<div class="dashboard-header" style="margin-bottom: 2rem;">
-    <h2>Teacher Dashboard</h2>
-    <p>View your classes and record student academic and behavioral performance.</p>
-</div>
-
-@if (TempData["SuccessMessage"] != null)
-{
-    <div class="alert alert-success" style="padding: 1rem; background-color: var(--color-success); color: white; margin-bottom: 1.5rem;">
-        @TempData["SuccessMessage"]
+<div class="dashboard-container">
+    <div class="dashboard-header split-header">
+        <h2>Teacher Dashboard</h2>
+        <a asp-controller="Insights" asp-action="Index" class="btn btn-secondary">AI Insights</a>
     </div>
-}
 
-<div class="form-row" style="grid-template-columns: 1fr; gap: 2rem;">
-    @if (!Model.Any())
+    @if (classTeacherFor.Any())
     {
-        <p class="text-muted">No classrooms have been assigned or created for your school yet.</p>
-    }
-    else
-    {
-        foreach (var classroom in Model)
-        {
-            <div class="card" style="margin-bottom: 2rem;">
-                <div class="card-header" style="background-color: var(--color-primary-lighter); padding: 1rem; display: flex; justify-content: space-between; align-items: center;">
-                    <h4 style="margin: 0; color: var(--color-primary-dark);">@classroom.Name <span style="font-size: 0.9rem; font-weight: 500; color: var(--color-text-muted); margin-left: 1rem;">@classroom.GradeLevel</span></h4>
-                    <a asp-action="ExportClassJson" asp-route-id="@classroom.Id" class="btn btn-sm btn-primary" target="_blank">Export Class JSON</a>
-                </div>
-
-                <div class="card-body" style="padding: 1.5rem; border: 1px solid var(--color-border); border-top: none;">
-                    @if (!classroom.Students.Any())
-                    {
-                        <p class="text-muted" style="margin: 0;">No students enrolled in this class yet.</p>
-                    }
-                    else
-                    {
-                        <table class="table" style="width: 100%; border-collapse: collapse;">
-                            <thead>
-                                <tr style="border-bottom: 2px solid var(--color-border); text-align: left;">
-                                    <th style="padding: 0.75rem;">Student Name</th>
-                                    <th style="padding: 0.75rem;">Gender</th>
-                                    <th style="padding: 0.75rem;">Recent Records (Total: 0)</th>
-                                    <th style="padding: 0.75rem; text-align: right;">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var student in classroom.Students)
-                                {
-                                    <tr style="border-bottom: 1px solid var(--color-border);">
-                                        <td style="padding: 0.75rem;">
-                                            <strong>@student.Name</strong>
-                                            <span style="font-size: 0.85rem; color: var(--color-text-muted); display: block;">ID: @student.StudentId</span>
-                                        </td>
-                                        <td style="padding: 0.75rem;">@student.Gender</td>
-                                        <td style="padding: 0.75rem;">
-                                            <button class="btn btn-sm btn-outline-primary" style="font-size: 0.8rem;" onclick="document.getElementById('records_@student.Id').style.display = document.getElementById('records_@student.Id').style.display === 'none' ? 'table-row' : 'none'">
-                                                Toggle @(student.Records?.Count ?? 0) Records
-                                            </button>
-                                        </td>
-                                        <td style="padding: 0.75rem; text-align: right; display: flex; gap: 0.5rem; justify-content: flex-end;">
-                                            <a asp-action="ExportStudentJson" asp-route-id="@student.Id" class="btn btn-outline-info btn-sm" target="_blank" style="font-size: 0.8rem; padding: 0.25rem 0.5rem; text-decoration: none;">Export JSON</a>
-                                            <button type="button" class="btn btn-primary btn-sm" onclick="document.getElementById('records_@student.Id').style.display='table-row'; document.getElementById('addRecord_@student.Id').style.display='block';">Add Record</button>
-                                        </td>
-                                    </tr>
-                                    
-                                    <!-- Records Row -->
-                                    <tr id="records_@student.Id" style="display:none; background-color: #f4f6f8;">
-                                        <td colspan="4" style="padding: 1rem 2rem; border-bottom: 1px solid var(--color-border);">
-                                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                                                <h6 style="color: var(--color-primary-dark); margin: 0;">Behavioral & Academic Records</h6>
-                                                <button class="btn btn-sm btn-success" onclick="document.getElementById('addRecord_@student.Id').style.display='block'">+ Add Record</button>
-                                            </div>
-                                            
-                                            <div id="addRecord_@student.Id" style="display:none; background: white; padding: 1rem; border: 1px solid var(--color-border); margin-bottom: 1rem;">
-                                                <form method="post" asp-action="AddRecord">
-                                                    <input type="hidden" name="StudentId" value="@student.Id" />
-                                                    <div class="form-group">
-                                                        <select name="Type" class="form-control" required style="font-size: 0.85rem; margin-bottom: 0.5rem;">
-                                                            <option value="">Select Type...</option>
-                                                            <option value="Academic">Academic</option>
-                                                            <option value="Behavioral">Behavioral</option>
-                                                            <option value="Attendance">Attendance</option>
-                                                            <option value="Other">Other</option>
-                                                        </select>
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <textarea name="Text" class="form-control" rows="2" required placeholder="Details..." style="font-size: 0.85rem; margin-bottom: 0.5rem;"></textarea>
-                                                    </div>
-                                                    <button type="submit" class="btn btn-success btn-sm">Save Record</button>
-                                                    <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('addRecord_@student.Id').style.display='none'">Cancel</button>
-                                                </form>
-                                            </div>
-
-                                            @if (student.Records != null && student.Records.Any())
-                                            {
-                                                <ul style="list-style: none; padding: 0;">
-                                                    @foreach(var r in student.Records.OrderByDescending(rec => rec.CreatedAt))
-                                                    {
-                                                        <li style="background: white; padding: 0.8rem; border: 1px solid var(--color-border); margin-bottom: 0.5rem; border-radius: 4px;">
-                                                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                                                                <div>
-                                                                    <span style="font-size: 0.8rem; font-weight: 600; padding: 0.2rem 0.5rem; background-color: var(--color-primary-lighter); color: var(--color-primary-dark);">@r.Type</span>
-                                                                    <span style="font-size: 0.8rem; color: var(--color-text-muted); margin-left: 0.5rem;">@r.CreatedAt.ToShortDateString()</span>
-                                                                </div>
-                                                                <div style="display: flex; gap: 0.5rem;">
-                                                                    <button class="btn btn-sm btn-outline-primary" style="font-size: 0.7rem; padding: 0.1rem 0.4rem;" onclick="document.getElementById('editRecord_@r.Id').style.display='block'">Edit</button>
-                                                                    <form method="post" asp-action="DeleteRecord" asp-route-id="@r.Id" onsubmit="return confirm('Delete this record?');">
-                                                                        <button type="submit" class="btn btn-sm btn-outline-danger" style="font-size: 0.7rem; padding: 0.1rem 0.4rem;">Del</button>
-                                                                    </form>
-                                                                </div>
-                                                            </div>
-                                                            <div style="font-size: 0.9rem; font-style: italic;">"@r.Text"</div>
-                                                            
-                                                            <div id="editRecord_@r.Id" style="display:none; margin-top: 1rem; border-top: 1px dashed var(--color-border); padding-top: 1rem;">
-                                                                <form method="post" asp-action="EditRecord">
-                                                                    <input type="hidden" name="id" value="@r.Id" />
-                                                                    <div class="form-group">
-                                                                        <select name="Type" class="form-control" required style="font-size: 0.85rem; margin-bottom: 0.5rem;">
-                                                                            <option value="Academic" selected="@(r.Type=="Academic")">Academic</option>
-                                                                            <option value="Behavioral" selected="@(r.Type=="Behavioral")">Behavioral</option>
-                                                                            <option value="Attendance" selected="@(r.Type=="Attendance")">Attendance</option>
-                                                                            <option value="Other" selected="@(r.Type=="Other")">Other</option>
-                                                                        </select>
-                                                                    </div>
-                                                                    <div class="form-group">
-                                                                        <textarea name="Text" class="form-control" rows="2" required style="font-size: 0.85rem; margin-bottom: 0.5rem;">@r.Text</textarea>
-                                                                    </div>
-                                                                    <button type="submit" class="btn btn-primary btn-sm">Update</button>
-                                                                    <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('editRecord_@r.Id').style.display='none'">Cancel</button>
-                                                                </form>
-                                                            </div>
-                                                        </li>
-                                                    }
-                                                </ul>
-                                            }
-                                            else
-                                            {
-                                                <p class="text-muted" style="font-size: 0.9rem;">No records exist for this student.</p>
-                                            }
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    }
-                </div>
+        <div class="panel">
+            <div class="panel-header"><h5 class="panel-title">Class Teacher Access</h5></div>
+            <div class="panel-body">
+                @foreach (var cls in classTeacherFor)
+                {
+                    <span class="status-badge status-approved">@cls.Name</span>
+                }
             </div>
-        }
+        </div>
     }
+
+    <div class="panel">
+        <div class="panel-header"><h5 class="panel-title">Assigned Section Subjects</h5></div>
+        <div class="panel-body-nopad">
+            <table class="data-table">
+                <thead><tr><th>Class</th><th>Section</th><th>Subject</th><th></th></tr></thead>
+                <tbody>
+                @foreach (var assignment in Model)
+                {
+                    <tr>
+                        <td>@assignment.ClassSection.ClassLevel.Name</td>
+                        <td>@assignment.ClassSection.Name</td>
+                        <td>@assignment.Subject.Name</td>
+                        <td class="text-right"><a asp-action="SectionSubject" asp-route-sectionId="@assignment.ClassSectionId" asp-route-subjectId="@assignment.SubjectId" class="btn btn-primary">Open</a></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>

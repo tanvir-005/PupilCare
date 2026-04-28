@@ -1,0 +1,46 @@
+@model PupilCare.ViewModels.TakeAttendanceViewModel
+@{
+    ViewData["Title"] = "Take Attendance";
+    var sec = ViewBag.Section as PupilCare.Models.ClassSection;
+    var subject = ViewBag.Subject as PupilCare.Models.Subject;
+}
+
+<div class="dashboard-container">
+    <div class="dashboard-header"><h2>Attendance - @sec?.ClassLevel.Name @sec?.Name - @subject?.Name</h2></div>
+
+    <form asp-action="TakeAttendance" method="get" class="inline-form panel panel-body">
+        <input type="hidden" name="sectionId" value="@Model.ClassSectionId" />
+        <input type="hidden" name="subjectId" value="@Model.SubjectId" />
+        <input type="date" name="date" value="@Model.Date.ToString("yyyy-MM-dd")" class="form-control w-auto" />
+        <button class="btn btn-secondary" type="submit">Load Date</button>
+    </form>
+
+    <form asp-action="TakeAttendance" method="post">
+        <input type="hidden" asp-for="ClassSectionId" />
+        <input type="hidden" asp-for="SubjectId" />
+        <input type="hidden" asp-for="Date" />
+        <div class="panel">
+            <div class="panel-header"><h5 class="panel-title">@Model.Date.ToString("dd MMM yyyy")</h5><button class="btn btn-primary" type="submit">Save Attendance</button></div>
+            <div class="panel-body-nopad">
+                <table class="data-table">
+                    <thead><tr><th>ID</th><th>Name</th><th>Present</th></tr></thead>
+                    <tbody>
+                    @for (var i = 0; i < Model.Entries.Count; i++)
+                    {
+                        <tr>
+                            <td>
+                                @Model.Entries[i].StudentRollId
+                                <input type="hidden" asp-for="Entries[i].StudentId" />
+                                <input type="hidden" asp-for="Entries[i].StudentName" />
+                                <input type="hidden" asp-for="Entries[i].StudentRollId" />
+                            </td>
+                            <td>@Model.Entries[i].StudentName</td>
+                            <td><input asp-for="Entries[i].IsPresent" /></td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </form>
+</div>

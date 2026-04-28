@@ -1,0 +1,35 @@
+@model IEnumerable<PupilCare.Models.Student>
+@{
+    ViewData["Title"] = "Section Subject";
+    var assignment = ViewBag.Assignment as PupilCare.Models.TeacherAssignment;
+}
+
+<div class="dashboard-container">
+    <div class="dashboard-header split-header">
+        <h2>@assignment?.ClassSection.ClassLevel.Name - Section @assignment?.ClassSection.Name - @assignment?.Subject.Name</h2>
+        <div class="panel-actions">
+            <a asp-action="TakeAttendance" asp-route-sectionId="@assignment?.ClassSectionId" asp-route-subjectId="@assignment?.SubjectId" class="btn btn-secondary">Attendance</a>
+            <a asp-action="GradeStudents" asp-route-sectionId="@assignment?.ClassSectionId" asp-route-subjectId="@assignment?.SubjectId" class="btn btn-primary">Grade</a>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header"><h5 class="panel-title">Students</h5></div>
+        <div class="panel-body-nopad">
+            <table class="data-table">
+                <thead><tr><th>ID</th><th>Name</th><th>Gender</th><th></th></tr></thead>
+                <tbody>
+                @foreach (var student in Model)
+                {
+                    <tr>
+                        <td>@student.StudentId</td>
+                        <td>@student.Name</td>
+                        <td>@student.Gender</td>
+                        <td class="text-right"><a asp-action="StudentProfile" asp-route-id="@student.Id" class="btn btn-secondary">Profile</a></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

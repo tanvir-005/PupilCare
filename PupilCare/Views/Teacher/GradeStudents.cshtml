@@ -1,0 +1,53 @@
+@model PupilCare.ViewModels.GradeStudentsViewModel
+@{
+    ViewData["Title"] = "Grade Students";
+    var sec = ViewBag.Section as PupilCare.Models.ClassSection;
+    var subject = ViewBag.Subject as PupilCare.Models.Subject;
+}
+
+<div class="dashboard-container">
+    <div class="dashboard-header"><h2>Grade - @sec?.ClassLevel.Name @sec?.Name - @subject?.Name</h2></div>
+
+    <form asp-action="GradeStudents" method="get" class="inline-form panel panel-body">
+        <input type="hidden" name="sectionId" value="@Model.ClassSectionId" />
+        <input type="hidden" name="subjectId" value="@Model.SubjectId" />
+        <select name="examId" asp-items="ViewBag.Exams" class="form-control w-auto"></select>
+        <button class="btn btn-secondary" type="submit">Load Exam</button>
+    </form>
+
+    @if (Model.ExamId == 0)
+    {
+        <div class="panel"><div class="panel-body">No exam has been created for this class yet.</div></div>
+    }
+    else
+    {
+        <form asp-action="GradeStudents" method="post">
+            <input type="hidden" asp-for="ClassSectionId" />
+            <input type="hidden" asp-for="SubjectId" />
+            <input type="hidden" asp-for="ExamId" />
+            <div class="panel">
+                <div class="panel-header"><h5 class="panel-title">Marks</h5><button class="btn btn-primary" type="submit">Save Marks</button></div>
+                <div class="panel-body-nopad">
+                    <table class="data-table">
+                        <thead><tr><th>ID</th><th>Name</th><th>Marks</th></tr></thead>
+                        <tbody>
+                        @for (var i = 0; i < Model.Entries.Count; i++)
+                        {
+                            <tr>
+                                <td>
+                                    @Model.Entries[i].StudentRollId
+                                    <input type="hidden" asp-for="Entries[i].StudentId" />
+                                    <input type="hidden" asp-for="Entries[i].StudentName" />
+                                    <input type="hidden" asp-for="Entries[i].StudentRollId" />
+                                </td>
+                                <td>@Model.Entries[i].StudentName</td>
+                                <td><input asp-for="Entries[i].MarksObtained" class="form-control w-auto" /></td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </form>
+    }
+</div>

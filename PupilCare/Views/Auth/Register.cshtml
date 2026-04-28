@@ -1,74 +1,70 @@
 @model PupilCare.ViewModels.RegisterSchoolAdminViewModel
-
 @{
-    ViewData["Title"] = "Register School";
+    ViewData["Title"] = "Register Your School";
 }
 
 <div class="auth-wrapper">
     <div class="auth-card register-card">
         <div class="auth-header">
-            <h2>Register Your School</h2>
-            <p>Join PupilCare to manage your institution efficiently.</p>
+            <h2>@ViewData["Title"]</h2>
+            <p>Create an account for your school and become the administrator.</p>
         </div>
-
-        <form method="post" class="auth-form">
+        
+        <form asp-action="Register" method="post">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            
+
             <div class="form-row">
-                <div class="form-column">
-                    <h4>Admin Details</h4>
+                <div class="form-section">
+                    <h4>School Information</h4>
                     <div class="form-group">
-                        <label asp-for="FullName">Full Name</label>
-                        <input asp-for="FullName" class="form-control" placeholder="John Doe" />
-                        <span asp-validation-for="FullName" class="text-danger"></span>
+                        <label asp-for="SchoolName">School Name</label>
+                        <input asp-for="SchoolName" class="form-control" placeholder="Greenfield Academy" />
+                        <span asp-validation-for="SchoolName" class="text-danger"></span>
                     </div>
-
                     <div class="form-group">
-                        <label asp-for="Email">Admin Email</label>
-                        <input asp-for="Email" class="form-control" placeholder="admin@school.com" />
-                        <span asp-validation-for="Email" class="text-danger"></span>
+                        <label asp-for="EIIN">EIIN</label>
+                        <input asp-for="EIIN" class="form-control" placeholder="123456" />
+                        <span asp-validation-for="EIIN" class="text-danger"></span>
                     </div>
-
                     <div class="form-group">
-                        <label asp-for="Password">Password</label>
-                        <input asp-for="Password" class="form-control" placeholder="••••••••" />
-                        <span asp-validation-for="Password" class="text-danger"></span>
-                    </div>
-
-                    <div class="form-group">
-                        <label asp-for="ConfirmPassword">Confirm Password</label>
-                        <input asp-for="ConfirmPassword" class="form-control" placeholder="••••••••" />
-                        <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                        <label asp-for="SchoolAddress">Address</label>
+                        <input asp-for="SchoolAddress" class="form-control" placeholder="123 Education Lane..." />
+                        <span asp-validation-for="SchoolAddress" class="text-danger"></span>
                     </div>
                 </div>
 
-                <div class="form-column border-left">
-                    <h4>School Details</h4>
+                <div class="form-section">
+                    <h4>Administrator Information</h4>
                     <div class="form-group">
-                        <label asp-for="SchoolName">School Name</label>
-                        <input asp-for="SchoolName" class="form-control" placeholder="Springfield High" />
-                        <span asp-validation-for="SchoolName" class="text-danger"></span>
+                        <label asp-for="FullName">Your Full Name</label>
+                        <input asp-for="FullName" class="form-control" placeholder="John Doe" />
+                        <span asp-validation-for="FullName" class="text-danger"></span>
                     </div>
-
                     <div class="form-group">
-                        <label asp-for="SchoolAddress">Address</label>
-                        <input asp-for="SchoolAddress" class="form-control" placeholder="123 Education St" />
-                        <span asp-validation-for="SchoolAddress" class="text-danger"></span>
+                        <label asp-for="Designation">Designation</label>
+                        <input asp-for="Designation" class="form-control" placeholder="Principal / Admin" />
+                        <span asp-validation-for="Designation" class="text-danger"></span>
                     </div>
-
                     <div class="form-group">
-                        <label asp-for="SchoolContact">Contact Number</label>
-                        <input asp-for="SchoolContact" class="form-control" placeholder="+1 234 567 890" />
-                        <span asp-validation-for="SchoolContact" class="text-danger"></span>
+                        <label asp-for="Email">Your Email (Login ID)</label>
+                        <input asp-for="Email" class="form-control" placeholder="admin@school.com" />
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Password">Password</label>
+                        <input asp-for="Password" class="form-control" />
+                        <span asp-validation-for="Password" class="text-danger"></span>
                     </div>
                 </div>
             </div>
 
-            <button type="submit" class="btn btn-primary btn-block mt-4">Submit Registration Application</button>
+            <div class="form-group" style="margin-top: 2rem;">
+                <button type="submit" class="btn btn-primary btn-block">Register School</button>
+            </div>
         </form>
         
         <div class="auth-footer">
-            <p>Already registered? <a asp-action="Login">Log in here</a></p>
+            <p>Already registered your school? <a asp-action="Login">Login here</a></p>
         </div>
     </div>
 </div>

@@ -3,25 +3,31 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PupilCare.Data;
+using PupilCare.Filters;
 using PupilCare.Models;
 using PupilCare.ViewModels;
 using System.Linq;
-using System.Text;
-using System.Text.Json;
 using System.Threading.Tasks;
+using PupilCare.Services;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using System;
+using System.Collections.Generic;
 
 namespace PupilCare.Controllers
 {
     [Authorize(Roles = "SchoolAdmin")]
+    [WriteGuard]
     public class SchoolAdminController : Controller
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IPaymentService _paymentService;
 
-        public SchoolAdminController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+        public SchoolAdminController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, IPaymentService paymentService)
         {
             _context = context;
             _userManager = userManager;
+            _paymentService = paymentService;
         }
 
         public async Task<IActionResult> Dashboard()
@@ -30,8 +36,10 @@ namespace PupilCare.Controllers
             if (user == null || user.SchoolId == null) return RedirectToAction("Login", "Auth");
 
             var school = await _context.Schools
-                .Include(s => s.Classrooms)
-                .ThenInclude(c => c.Students)
+                .Include(s => s.ClassLevels)
+                    .ThenInclude(cl => cl.Sections)
+                        .ThenInclude(sec => sec.Students)
+                .Include(s => s.Users)
                 .FirstOrDefaultAsync(s => s.Id == user.SchoolId);
 
             if (school == null) return NotFound();
@@ -41,375 +49,508 @@ namespace PupilCare.Controllers
                 return View("NotApproved", school);
             }
 
-            var teachers = await _userManager.Users.Where(u => u.SchoolId == school.Id).ToListAsync();
-            var teacherRoleUsers = await _userManager.GetUsersInRoleAsync("Teacher");
+            ViewBag.School = school;
+            ViewBag.Teachers = await GetSchoolTeachersAsync(user.SchoolId.Value);
+            ViewBag.Students = school.ClassLevels.SelectMany(c => c.Sections).SelectMany(s => s.Students).Count();
+            return View(school);
+        }
+
+        public async Task<IActionResult> Classes()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null || user.SchoolId == null) return Unauthorized();
+
+            var classLevels = await _context.ClassLevels
+                .Include(cl => cl.Sections)
+                .Include(cl => cl.Subjects)
+                .Where(cl => cl.SchoolId == user.SchoolId)
+                .OrderBy(cl => cl.Order)
+                .ToListAsync();
+
+            return View(classLevels);
+        }
+
+        [HttpGet]
+        public IActionResult CreateClass() => View(new CreateClassLevelViewModel());
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateClass(CreateClassLevelViewModel model)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user?.SchoolId == null) return Unauthorized();
+            if (!ModelState.IsValid) return View(model);
+
+            _context.ClassLevels.Add(new ClassLevel { Name = model.Name, Order = model.Order, SchoolId = user.SchoolId.Value });
+            await _context.SaveChangesAsync();
+            TempData["SuccessMessage"] = "Class created.";
+            return RedirectToAction(nameof(Classes));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateSection(CreateSectionViewModel model)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user?.SchoolId == null) return Unauthorized();
+            var classLevel = await _context.ClassLevels.FirstOrDefaultAsync(c => c.Id == model.ClassLevelId && c.SchoolId == user.SchoolId);
+            if (classLevel == null) return NotFound();
+            if (!ModelState.IsValid) return RedirectToAction(nameof(Classes));
+
+            _context.ClassSections.Add(new ClassSection { Name = model.Name, ClassLevelId = classLevel.Id });
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Classes));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateSubject(CreateSubjectViewModel model)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user?.SchoolId == null) return Unauthorized();
+            var classLevel = await _context.ClassLevels.FirstOrDefaultAsync(c => c.Id == model.ClassLevelId && c.SchoolId == user.SchoolId);
+            if (classLevel == null) return NotFound();
+            if (!ModelState.IsValid) return RedirectToAction(nameof(Classes));
+
+            _context.Subjects.Add(new Subject { Name = model.Name, ClassLevelId = classLevel.Id });
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Classes));
+        }
+
+        public async Task<IActionResult> Teachers()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user?.SchoolId == null) return Unauthorized();
+
+            var teachers = await GetSchoolTeachersAsync(user.SchoolId.Value);
+            var assignments = await _context.TeacherAssignments
+                .Include(a => a.Teacher)
+                .Include(a => a.ClassSection).ThenInclude(s => s.ClassLevel)
+                .Include(a => a.Subject)
+                .Where(a => a.Teacher.SchoolId == user.SchoolId)
+                .OrderBy(a => a.Teacher.FullName)
+                .ToListAsync();
+
+            ViewBag.Assignments = assignments;
+            ViewBag.Classes = await _context.ClassLevels
+                .Include(c => c.Sections)
+                .Include(c => c.Subjects)
+                .Where(c => c.SchoolId == user.SchoolId)
+                .OrderBy(c => c.Order)
+                .ToListAsync();
+            return View(teachers);
+        }
+
+        [HttpGet]
+        public IActionResult CreateTeacher() => View(new CreateTeacherViewModel());
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateTeacher(CreateTeacherViewModel model)
+        {
+            var current = await _userManager.GetUserAsync(User);
+            if (current?.SchoolId == null) return Unauthorized();
+            if (!ModelState.IsValid) return View(model);
+
+            var teacher = new ApplicationUser
+            {
+                UserName = model.Email,
+                Email = model.Email,
+                FullName = model.FullName,
+                PhoneNumber = model.Phone,
+                Phone = model.Phone,
+                Designation = model.Designation,
+                SchoolId = current.SchoolId,
+                EmailConfirmed = true,
+                IsActive = true
+            };
+
+            var result = await _userManager.CreateAsync(teacher, model.Password);
+            if (result.Succeeded)
+            {
+                await _userManager.AddToRoleAsync(teacher, "Teacher");
+                return RedirectToAction(nameof(Teachers));
+            }
+
+            foreach (var error in result.Errors) ModelState.AddModelError(string.Empty, error.Description);
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AssignTeacher(AssignTeacherViewModel model)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user?.SchoolId == null) return Unauthorized();
+            if (!ModelState.IsValid) return RedirectToAction(nameof(Teachers));
+
+            var teacher = await _userManager.FindByIdAsync(model.TeacherId);
+            var section = await _context.ClassSections.Include(s => s.ClassLevel)
+                .FirstOrDefaultAsync(s => s.Id == model.ClassSectionId && s.ClassLevel.SchoolId == user.SchoolId);
+            if (section == null) return BadRequest();
+            var subject = await _context.Subjects
+                .FirstOrDefaultAsync(s => s.Id == model.SubjectId && s.ClassLevelId == section.ClassLevelId);
+
+            if (teacher?.SchoolId != user.SchoolId || subject == null) return BadRequest();
+            if (await _context.TeacherAssignments.AnyAsync(a => a.ClassSectionId == model.ClassSectionId && a.SubjectId == model.SubjectId))
+            {
+                TempData["ErrorMessage"] = "That section-subject already has a teacher.";
+                return RedirectToAction(nameof(Teachers));
+            }
+
+            _context.TeacherAssignments.Add(new TeacherAssignment
+            {
+                TeacherId = model.TeacherId,
+                ClassSectionId = model.ClassSectionId,
+                SubjectId = model.SubjectId
+            });
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Teachers));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SetClassTeacher(SetClassTeacherViewModel model)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user?.SchoolId == null) return Unauthorized();
+            var classLevel = await _context.ClassLevels.FirstOrDefaultAsync(c => c.Id == model.ClassLevelId && c.SchoolId == user.SchoolId);
+            if (classLevel == null) return NotFound();
+
+            if (!string.IsNullOrEmpty(model.TeacherId))
+            {
+                var teacher = await _userManager.FindByIdAsync(model.TeacherId);
+                if (teacher?.SchoolId != user.SchoolId || !await _userManager.IsInRoleAsync(teacher, "Teacher")) return BadRequest();
+            }
+
+            classLevel.ClassTeacherId = string.IsNullOrWhiteSpace(model.TeacherId) ? null : model.TeacherId;
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Teachers));
+        }
+
+        public async Task<IActionResult> Students(int? classLevelId, int? sectionId)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user?.SchoolId == null) return Unauthorized();
+            await LoadSchoolStructureAsync(user.SchoolId.Value);
+
+            var query = _context.Students
+                .Include(s => s.ClassSection).ThenInclude(cs => cs.ClassLevel)
+                .Where(s => s.ClassSection.ClassLevel.SchoolId == user.SchoolId);
+            if (sectionId.HasValue) query = query.Where(s => s.ClassSectionId == sectionId.Value);
+            else if (classLevelId.HasValue) query = query.Where(s => s.ClassSection.ClassLevelId == classLevelId.Value);
+
+            ViewBag.SelectedClassLevelId = classLevelId;
+            ViewBag.SelectedSectionId = sectionId;
+            return View(await query.OrderBy(s => s.ClassSection.ClassLevel.Order).ThenBy(s => s.ClassSection.Name).ThenBy(s => s.StudentId).ToListAsync());
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> EnrollStudent()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user?.SchoolId == null) return Unauthorized();
+            await LoadSectionSelectAsync(user.SchoolId.Value);
+            return View(new EnrollStudentViewModel { DateOfBirth = DateTime.Today.AddYears(-10) });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EnrollStudent(EnrollStudentViewModel model)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user?.SchoolId == null) return Unauthorized();
+            if (!ModelState.IsValid)
+            {
+                await LoadSectionSelectAsync(user.SchoolId.Value);
+                return View(model);
+            }
+
+            var section = await _context.ClassSections.Include(s => s.ClassLevel)
+                .FirstOrDefaultAsync(s => s.Id == model.ClassSectionId && s.ClassLevel.SchoolId == user.SchoolId);
+            if (section == null) return BadRequest();
+
+            _context.Students.Add(new Student
+            {
+                StudentId = model.StudentId,
+                Name = model.Name,
+                ClassSectionId = model.ClassSectionId,
+                Gender = model.Gender,
+                DateOfBirth = model.DateOfBirth,
+                Address = model.Address,
+                Contact = model.Contact,
+                BloodGroup = model.BloodGroup,
+                GuardianName = model.GuardianName,
+                GuardianContact = model.GuardianContact,
+                IsActive = true
+            });
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Students), new { sectionId = model.ClassSectionId });
+        }
+
+        public async Task<IActionResult> StudentProfile(int id)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user?.SchoolId == null) return Unauthorized();
+            var student = await GetStudentForSchoolAsync(id, user.SchoolId.Value);
+            if (student == null) return NotFound();
+            return View(student);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddComment(AddCommentViewModel model)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user?.SchoolId == null) return Unauthorized();
+            var student = await _context.Students.Include(s => s.ClassSection).ThenInclude(s => s.ClassLevel)
+                .FirstOrDefaultAsync(s => s.Id == model.StudentId && s.ClassSection.ClassLevel.SchoolId == user.SchoolId);
+            if (student == null) return NotFound();
+
+            _context.StudentComments.Add(new StudentComment
+            {
+                StudentId = student.Id,
+                CommentType = model.CommentType,
+                Text = model.Text,
+                CreatedByUserId = user.Id,
+                ClassSectionId = model.ClassSectionId ?? student.ClassSectionId,
+                SubjectId = model.SubjectId
+            });
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(StudentProfile), new { id = student.Id });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangeSection(ChangeSectionViewModel model)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user?.SchoolId == null) return Unauthorized();
+            var student = await _context.Students.Include(s => s.ClassSection).ThenInclude(s => s.ClassLevel)
+                .FirstOrDefaultAsync(s => s.Id == model.StudentId && s.ClassSection.ClassLevel.SchoolId == user.SchoolId);
+            var newSection = await _context.ClassSections.Include(s => s.ClassLevel)
+                .FirstOrDefaultAsync(s => s.Id == model.NewSectionId && s.ClassLevel.SchoolId == user.SchoolId);
+            if (student == null || newSection == null || student.ClassSection.ClassLevelId != newSection.ClassLevelId) return BadRequest();
+
+            student.ClassSectionId = newSection.Id;
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(StudentProfile), new { id = student.Id });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> PromoteStudents(PromoteStudentsViewModel model)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user?.SchoolId == null) return Unauthorized();
+            var targetSection = await _context.ClassSections.Include(s => s.ClassLevel)
+                .FirstOrDefaultAsync(s => s.Id == model.TargetSectionId && s.ClassLevelId == model.TargetClassLevelId && s.ClassLevel.SchoolId == user.SchoolId);
+            if (targetSection == null || model.StudentIds.Count == 0) return RedirectToAction(nameof(Students));
+
+            var students = await _context.Students.Include(s => s.ClassSection).ThenInclude(s => s.ClassLevel)
+                .Where(s => model.StudentIds.Contains(s.Id) && s.ClassSection.ClassLevel.SchoolId == user.SchoolId)
+                .ToListAsync();
+            foreach (var student in students) student.ClassSectionId = targetSection.Id;
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Students), new { sectionId = targetSection.Id });
+        }
+
+        public async Task<IActionResult> Exams()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user?.SchoolId == null) return Unauthorized();
+            await LoadClassSelectAsync(user.SchoolId.Value);
+            var exams = await _context.Exams.Include(e => e.ClassLevel)
+                .Where(e => e.SchoolId == user.SchoolId)
+                .OrderBy(e => e.ClassLevel.Order).ThenBy(e => e.Name)
+                .ToListAsync();
+            return View(exams);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateExam(CreateExamViewModel model)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user?.SchoolId == null) return Unauthorized();
+            var classLevel = await _context.ClassLevels.FirstOrDefaultAsync(c => c.Id == model.ClassLevelId && c.SchoolId == user.SchoolId);
+            if (classLevel == null || !ModelState.IsValid) return RedirectToAction(nameof(Exams));
+
+            _context.Exams.Add(new Exam { Name = model.Name, FullMark = model.FullMark, ClassLevelId = classLevel.Id, SchoolId = user.SchoolId.Value, CreatedByUserId = user.Id });
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Exams));
+        }
+
+        public async Task<IActionResult> Subscription()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null || user.SchoolId == null) return Unauthorized();
             
-            ViewBag.Teachers = teachers.Intersect(teacherRoleUsers).ToList();
+            var school = await _context.Schools.FindAsync(user.SchoolId);
+            if (school == null) return NotFound();
+
+            var plans = await _context.SubscriptionPlans.Where(p => p.IsActive).ToListAsync();
+            ViewBag.Plans = plans;
 
             return View(school);
         }
 
-        [HttpPost]
-        public async Task<IActionResult> CreateClassroom(CreateClassroomViewModel model)
+        private async Task<List<ApplicationUser>> GetSchoolTeachersAsync(int schoolId)
         {
-            var user = await _userManager.GetUserAsync(User);
-            if (ModelState.IsValid && user?.SchoolId != null)
-            {
-                var classroom = new Classroom
-                {
-                    Name = model.Name,
-                    GradeLevel = model.GradeLevel,
-                    SchoolId = user.SchoolId.Value
-                };
-                _context.Classrooms.Add(classroom);
-                await _context.SaveChangesAsync();
-                TempData["SuccessMessage"] = "Classroom created successfully.";
-            }
-            return RedirectToAction(nameof(Dashboard));
+            var users = await _context.Users.Where(u => u.SchoolId == schoolId).OrderBy(u => u.FullName).ToListAsync();
+            var teachers = new List<ApplicationUser>();
+            foreach (var user in users)
+                if (await _userManager.IsInRoleAsync(user, "Teacher")) teachers.Add(user);
+            return teachers;
+        }
+
+        private async Task LoadClassSelectAsync(int schoolId)
+        {
+            var classes = await _context.ClassLevels.Where(c => c.SchoolId == schoolId).OrderBy(c => c.Order).ToListAsync();
+            ViewBag.ClassLevels = new SelectList(classes, "Id", "Name");
+        }
+
+        private async Task LoadSectionSelectAsync(int schoolId)
+        {
+            var sections = await _context.ClassSections.Include(s => s.ClassLevel)
+                .Where(s => s.ClassLevel.SchoolId == schoolId)
+                .OrderBy(s => s.ClassLevel.Order).ThenBy(s => s.Name)
+                .Select(s => new { s.Id, Label = s.ClassLevel.Name + " - Section " + s.Name })
+                .ToListAsync();
+            ViewBag.Sections = new SelectList(sections, "Id", "Label");
+        }
+
+        private async Task LoadSchoolStructureAsync(int schoolId)
+        {
+            ViewBag.Classes = await _context.ClassLevels.Include(c => c.Sections).Where(c => c.SchoolId == schoolId).OrderBy(c => c.Order).ToListAsync();
+        }
+
+        private async Task<Student?> GetStudentForSchoolAsync(int id, int schoolId)
+        {
+            return await _context.Students
+                .Include(s => s.ClassSection).ThenInclude(cs => cs.ClassLevel).ThenInclude(cl => cl.Sections)
+                .Include(s => s.ExamMarks).ThenInclude(m => m.Exam)
+                .Include(s => s.ExamMarks).ThenInclude(m => m.Subject)
+                .Include(s => s.AttendanceRecords).ThenInclude(a => a.Subject)
+                .Include(s => s.Comments).ThenInclude(c => c.CreatedBy)
+                .FirstOrDefaultAsync(s => s.Id == id && s.ClassSection.ClassLevel.SchoolId == schoolId);
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateTeacher(CreateTeacherViewModel model)
+        public async Task<IActionResult> InitiatePayment(int planId)
         {
             var user = await _userManager.GetUserAsync(User);
-            if (ModelState.IsValid && user?.SchoolId != null)
-            {
-                var teacher = new ApplicationUser
-                {
-                    UserName = model.Email,
-                    Email = model.Email,
-                    FullName = model.FullName,
-                    SchoolId = user.SchoolId.Value
-                };
+            if (user == null || user.SchoolId == null) return Unauthorized();
 
-                var result = await _userManager.CreateAsync(teacher, model.Password);
-                if (result.Succeeded)
-                {
-                    await _userManager.AddToRoleAsync(teacher, "Teacher");
-                    TempData["SuccessMessage"] = "Teacher account created successfully.";
-                }
-                else
-                {
-                    TempData["ErrorMessage"] = string.Join(", ", result.Errors.Select(e => e.Description));
-                }
-            }
-            return RedirectToAction(nameof(Dashboard));
-        }
+            var school = await _context.Schools.FindAsync(user.SchoolId);
+            var plan = await _context.SubscriptionPlans.FindAsync(planId);
 
-        [HttpPost]
-        public async Task<IActionResult> EnrollStudent(EnrollStudentViewModel model)
-        {
-            var user = await _userManager.GetUserAsync(User);
-            
-            if (!ModelState.IsValid)
-            {
-                TempData["ErrorMessage"] = "Validation failed: " + string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return RedirectToAction(nameof(Dashboard));
-            }
+            if (school == null || plan == null || !plan.IsActive)
+                return BadRequest("Invalid plan or school.");
 
-            if (user?.SchoolId == null)
-            {
-                TempData["ErrorMessage"] = "User or school information not found.";
-                return RedirectToAction(nameof(Dashboard));
-            }
+            var transactionId = "TXN" + DateTime.UtcNow.Ticks;
 
-            // Verify classroom belongs to this school
-            var classroom = await _context.Classrooms.FirstOrDefaultAsync(c => c.Id == model.ClassroomId && c.SchoolId == user.SchoolId.Value);
-            if (classroom == null)
+            var payment = new SubscriptionPayment
             {
-                TempData["ErrorMessage"] = "Invalid classroom or classroom does not belong to your school.";
-                return RedirectToAction(nameof(Dashboard));
-            }
-
-            // Check for duplicate StudentId in the school
-            var exists = await _context.Students.Include(s => s.Classroom)
-                .AnyAsync(s => s.StudentId == model.StudentId && s.Classroom.SchoolId == user.SchoolId.Value);
-            if (exists)
-            {
-                TempData["ErrorMessage"] = "A student with this ID already exists in your school.";
-                return RedirectToAction(nameof(Dashboard));
-            }
-
-            var student = new Student
-            {
-                StudentId = model.StudentId,
-                Name = model.Name,
-                Address = model.Address,
-                Contact = model.Contact,
-                Gender = model.Gender,
-                DateOfBirth = model.DateOfBirth,
-                ClassroomId = classroom.Id
+                SchoolId = school.Id,
+                SubscriptionPlanId = plan.Id,
+                Amount = plan.Price,
+                TransactionId = transactionId,
+                Status = "Pending"
             };
-            
-            _context.Students.Add(student);
+
+            _context.SubscriptionPayments.Add(payment);
             await _context.SaveChangesAsync();
-            TempData["SuccessMessage"] = "Student enrolled successfully.";
+
+            var gatewayUrl = await _paymentService.InitiatePaymentAsync(
+                school.Id, plan.Id, plan.Price,
+                transactionId, user.FullName ?? "School Admin",
+                user.Email ?? "admin@school.com", school.EIIN ?? "000000");
+
+            if (!string.IsNullOrEmpty(gatewayUrl))
+            {
+                return Redirect(gatewayUrl);
+            }
+
+            // Fallback for development if SslCommerz isn't configured
+            payment.Status = "Success";
+            payment.CompletedAt = DateTime.UtcNow;
             
-            return RedirectToAction(nameof(Dashboard));
+            // Calculate new expiry date
+            var baseDate = (school.SubscriptionExpiry.HasValue && school.SubscriptionExpiry.Value > DateTime.UtcNow) 
+                ? school.SubscriptionExpiry.Value 
+                : DateTime.UtcNow;
+            
+            school.SubscriptionExpiry = baseDate.AddDays(plan.DurationDays).AddMinutes(plan.DurationMinutes);
+            payment.NewExpiryDate = school.SubscriptionExpiry;
+            
+            await _context.SaveChangesAsync();
+            return RedirectToAction("Subscription");
         }
 
-        public async Task<IActionResult> ClassroomOverview(int id)
-        {
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null || user.SchoolId == null) return RedirectToAction("Login", "Auth");
-
-            var classroom = await _context.Classrooms
-                .Include(c => c.Students)
-                .ThenInclude(s => s.Records)
-                .FirstOrDefaultAsync(c => c.Id == id && c.SchoolId == user.SchoolId.Value);
-
-            if (classroom == null) return NotFound();
-
-            return View(classroom);
-        }
-
+        [AllowAnonymous]
         [HttpPost]
-        public async Task<IActionResult> EditClassroom(int id, string name, string gradeLevel)
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> PaymentSuccess([FromForm] string tran_id, [FromForm] string val_id, [FromForm] string amount, [FromForm] string currency)
         {
-            var user = await _userManager.GetUserAsync(User);
-            var classroom = await _context.Classrooms.FirstOrDefaultAsync(c => c.Id == id && c.SchoolId == user.SchoolId);
-            if (classroom != null)
-            {
-                classroom.Name = name;
-                classroom.GradeLevel = gradeLevel;
-                await _context.SaveChangesAsync();
-                TempData["SuccessMessage"] = "Classroom updated.";
-            }
-            return RedirectToAction(nameof(Dashboard));
-        }
+            var payment = await _context.SubscriptionPayments
+                .Include(p => p.School)
+                .Include(p => p.Plan)
+                .FirstOrDefaultAsync(p => p.TransactionId == tran_id);
 
-        [HttpPost]
-        public async Task<IActionResult> DeleteClassroom(int id)
-        {
-            var user = await _userManager.GetUserAsync(User);
-            var classroom = await _context.Classrooms.FirstOrDefaultAsync(c => c.Id == id && c.SchoolId == user.SchoolId);
-            if (classroom != null)
-            {
-                _context.Classrooms.Remove(classroom);
-                await _context.SaveChangesAsync();
-                TempData["SuccessMessage"] = "Classroom deleted.";
-            }
-            return RedirectToAction(nameof(Dashboard));
-        }
+            if (payment == null) return NotFound();
 
-        [HttpPost]
-        public async Task<IActionResult> DeleteTeacher(string id)
-        {
-            var teacher = await _userManager.FindByIdAsync(id);
-            var user = await _userManager.GetUserAsync(User);
-            if (teacher != null && teacher.SchoolId == user.SchoolId)
-            {
-                await _userManager.DeleteAsync(teacher);
-                TempData["SuccessMessage"] = "Teacher deleted.";
-            }
-            return RedirectToAction(nameof(Dashboard));
-        }
+            var isValid = await _paymentService.ValidatePaymentAsync(val_id, amount, currency);
 
-        [HttpPost]
-        public async Task<IActionResult> EditStudent(int id, string name, string gender, string address, string contact)
-        {
-            var user = await _userManager.GetUserAsync(User);
-            var student = await _context.Students.Include(s => s.Classroom).FirstOrDefaultAsync(s => s.Id == id && s.Classroom.SchoolId == user.SchoolId);
-            if (student != null)
+            if (isValid)
             {
-                student.Name = name;
-                student.Gender = gender;
-                student.Address = address;
-                student.Contact = contact;
-                await _context.SaveChangesAsync();
-                TempData["SuccessMessage"] = "Student updated.";
-            }
-            return RedirectToAction("ClassroomOverview", new { id = student?.ClassroomId });
-        }
+                payment.Status = "Success";
+                payment.CompletedAt = DateTime.UtcNow;
+                payment.GatewayTransactionId = val_id;
 
-        [HttpPost]
-        public async Task<IActionResult> DeleteStudent(int id)
-        {
-            var user = await _userManager.GetUserAsync(User);
-            var student = await _context.Students.Include(s => s.Classroom).FirstOrDefaultAsync(s => s.Id == id && s.Classroom.SchoolId == user.SchoolId);
-            int? classroomId = student?.ClassroomId;
-            if (student != null)
-            {
-                _context.Students.Remove(student);
-                await _context.SaveChangesAsync();
-                TempData["SuccessMessage"] = "Student deleted.";
-            }
-            return RedirectToAction("ClassroomOverview", new { id = classroomId });
-        }
+                var school = payment.School;
+                var plan = payment.Plan;
 
-        [HttpPost]
-        public async Task<IActionResult> AddRecord(AddRecordViewModel model, string returnUrl = null)
-        {
-            var user = await _userManager.GetUserAsync(User);
-            if (ModelState.IsValid && user != null)
-            {
-                var record = new Record
-                {
-                    StudentId = model.StudentId,
-                    TeacherId = user.Id,
-                    Type = model.Type,
-                    Text = model.Text
-                };
+                var baseDate = (school.SubscriptionExpiry.HasValue && school.SubscriptionExpiry.Value > DateTime.UtcNow) 
+                    ? school.SubscriptionExpiry.Value 
+                    : DateTime.UtcNow;
                 
-                _context.Records.Add(record);
+                school.SubscriptionExpiry = baseDate.AddDays(plan.DurationDays).AddMinutes(plan.DurationMinutes);
+                payment.NewExpiryDate = school.SubscriptionExpiry;
+
                 await _context.SaveChangesAsync();
-                TempData["SuccessMessage"] = "Record added successfully.";
+                return RedirectToAction("Subscription");
             }
-            if (!string.IsNullOrEmpty(returnUrl)) return LocalRedirect(returnUrl);
-            return RedirectToAction(nameof(Dashboard));
+
+            return RedirectToAction("PaymentFail");
         }
 
+        [AllowAnonymous]
         [HttpPost]
-        public async Task<IActionResult> EditRecord(int id, string type, string text, string returnUrl = null)
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> PaymentFail([FromForm] string tran_id)
         {
-            var record = await _context.Records.FindAsync(id);
-            if (record != null)
+            var payment = await _context.SubscriptionPayments.FirstOrDefaultAsync(p => p.TransactionId == tran_id);
+            if (payment != null)
             {
-                record.Type = type;
-                record.Text = text;
+                payment.Status = "Failed";
                 await _context.SaveChangesAsync();
-                TempData["SuccessMessage"] = "Record updated.";
             }
-            if (!string.IsNullOrEmpty(returnUrl)) return LocalRedirect(returnUrl);
-            return RedirectToAction(nameof(Dashboard));
+            return RedirectToAction("Subscription");
         }
 
+        [AllowAnonymous]
         [HttpPost]
-        public async Task<IActionResult> DeleteRecord(int id, string returnUrl = null)
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> PaymentCancel([FromForm] string tran_id)
         {
-            var record = await _context.Records.FindAsync(id);
-            if (record != null)
+            var payment = await _context.SubscriptionPayments.FirstOrDefaultAsync(p => p.TransactionId == tran_id);
+            if (payment != null)
             {
-                _context.Records.Remove(record);
+                payment.Status = "Cancelled";
                 await _context.SaveChangesAsync();
-                TempData["SuccessMessage"] = "Record deleted.";
             }
-            if (!string.IsNullOrEmpty(returnUrl)) return LocalRedirect(returnUrl);
-            return RedirectToAction(nameof(Dashboard));
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> ExportSchoolJson()
-        {
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null || user.SchoolId == null) return Unauthorized();
-
-            var school = await _context.Schools
-                .Include(s => s.Classrooms)
-                    .ThenInclude(c => c.Students)
-                        .ThenInclude(s => s.Records)
-                .AsNoTracking()
-                .FirstOrDefaultAsync(s => s.Id == user.SchoolId);
-
-            if (school == null) return NotFound();
-
-            var exportData = new
-            {
-                SchoolName = school.Name,
-                Classrooms = school.Classrooms.Select(c => new
-                {
-                    ClassName = c.Name,
-                    GradeLevel = c.GradeLevel,
-                    Students = c.Students.Select(s => new
-                    {
-                        StudentId = s.StudentId,
-                        Name = s.Name,
-                        Gender = s.Gender,
-                        DateOfBirth = s.DateOfBirth.ToString("yyyy-MM-dd"),
-                        Address = s.Address,
-                        Contact = s.Contact,
-                        Records = s.Records.Select(r => new
-                        {
-                            Type = r.Type,
-                            Text = r.Text,
-                            CreatedAt = r.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")
-                        }).ToList()
-                    }).ToList()
-                }).ToList()
-            };
-
-            var options = new JsonSerializerOptions { WriteIndented = true };
-            var jsonString = JsonSerializer.Serialize(exportData, options);
-
-            return File(Encoding.UTF8.GetBytes(jsonString), "application/json", "School_Export.json");
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> ExportClassJson(int id)
-        {
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null || user.SchoolId == null) return Unauthorized();
-
-            var classroom = await _context.Classrooms
-                .Include(c => c.Students)
-                    .ThenInclude(s => s.Records)
-                .AsNoTracking()
-                .FirstOrDefaultAsync(c => c.Id == id && c.SchoolId == user.SchoolId);
-
-            if (classroom == null) return NotFound();
-
-            var exportData = new
-            {
-                ClassName = classroom.Name,
-                GradeLevel = classroom.GradeLevel,
-                Students = classroom.Students.Select(s => new
-                {
-                    StudentId = s.StudentId,
-                    Name = s.Name,
-                    Gender = s.Gender,
-                    DateOfBirth = s.DateOfBirth.ToString("yyyy-MM-dd"),
-                    Address = s.Address,
-                    Contact = s.Contact,
-                    Records = s.Records.Select(r => new
-                    {
-                        Type = r.Type,
-                        Text = r.Text,
-                        CreatedAt = r.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")
-                    }).ToList()
-                }).ToList()
-            };
-
-            var options = new JsonSerializerOptions { WriteIndented = true };
-            var jsonString = JsonSerializer.Serialize(exportData, options);
-
-            return File(Encoding.UTF8.GetBytes(jsonString), "application/json", $"Class_{classroom.Name.Replace(" ", "_")}_Export.json");
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> ExportStudentJson(int id)
-        {
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null || user.SchoolId == null) return Unauthorized();
-
-            var student = await _context.Students
-                .Include(s => s.Classroom)
-                .Include(s => s.Records)
-                .AsNoTracking()
-                .FirstOrDefaultAsync(s => s.Id == id && s.Classroom.SchoolId == user.SchoolId);
-
-            if (student == null) return NotFound();
-
-            var exportData = new
-            {
-                StudentId = student.StudentId,
-                Name = student.Name,
-                ClassName = student.Classroom.Name,
-                Gender = student.Gender,
-                DateOfBirth = student.DateOfBirth.ToString("yyyy-MM-dd"),
-                Address = student.Address,
-                Contact = student.Contact,
-                Records = student.Records.Select(r => new
-                {
-                    Type = r.Type,
-                    Text = r.Text,
-                    CreatedAt = r.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")
-                }).ToList()
-            };
-
-            var options = new JsonSerializerOptions { WriteIndented = true };
-            var jsonString = JsonSerializer.Serialize(exportData, options);
-
-            return File(Encoding.UTF8.GetBytes(jsonString), "application/json", $"Student_{student.StudentId}_Export.json");
+            return RedirectToAction("Subscription");
         }
     }
 }

@@ -8,7 +8,7 @@
         The comprehensive decision support system for modern educational institutions. Manage your classrooms, teachers, and student records with ease.
     </p>
     <div style="margin-top: 2rem;">
-        @if (User.Identity.IsAuthenticated)
+        @if (User.Identity?.IsAuthenticated == true)
         {
             var dashboardController = User.IsInRole("SuperAdmin") ? "SuperAdmin" : User.IsInRole("SchoolAdmin") ? "SchoolAdmin" : "Teacher";
             <a asp-controller="@dashboardController" asp-action="Dashboard" class="btn btn-primary" style="font-size: 1.1rem; padding: 0.8rem 1.5rem;">Go to Dashboard</a>

@@ -1,0 +1,32 @@
+@model PupilCare.ViewModels.EnrollStudentViewModel
+@{
+    ViewData["Title"] = "Enroll Student";
+}
+
+<div class="panel form-panel">
+    <div class="panel-header"><h2 class="panel-title">Enroll Student</h2></div>
+    <div class="panel-body">
+        <form asp-action="EnrollStudent" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-row">
+                <div>
+                    <div class="form-group"><label asp-for="StudentId"></label><input asp-for="StudentId" class="form-control" /><span asp-validation-for="StudentId" class="text-danger"></span></div>
+                    <div class="form-group"><label asp-for="Name"></label><input asp-for="Name" class="form-control" /><span asp-validation-for="Name" class="text-danger"></span></div>
+                    <div class="form-group"><label asp-for="ClassSectionId">Class Section</label><select asp-for="ClassSectionId" asp-items="ViewBag.Sections" class="form-control"></select></div>
+                    <div class="form-group"><label asp-for="Gender"></label><select asp-for="Gender" class="form-control"><option>Male</option><option>Female</option><option>Other</option></select></div>
+                    <div class="form-group"><label asp-for="DateOfBirth"></label><input asp-for="DateOfBirth" class="form-control" /></div>
+                </div>
+                <div>
+                    <div class="form-group"><label asp-for="GuardianName"></label><input asp-for="GuardianName" class="form-control" /></div>
+                    <div class="form-group"><label asp-for="GuardianContact"></label><input asp-for="GuardianContact" class="form-control" /></div>
+                    <div class="form-group"><label asp-for="Contact"></label><input asp-for="Contact" class="form-control" /></div>
+                    <div class="form-group"><label asp-for="BloodGroup"></label><input asp-for="BloodGroup" class="form-control" /></div>
+                    <div class="form-group"><label asp-for="Address"></label><textarea asp-for="Address" class="form-control"></textarea></div>
+                </div>
+            </div>
+            <div class="form-actions"><a asp-action="Students" class="btn btn-secondary">Cancel</a><button class="btn btn-primary" type="submit">Enroll</button></div>
+        </form>
+    </div>
+</div>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

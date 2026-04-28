@@ -1,0 +1,121 @@
+@model IEnumerable<PupilCare.Models.ApplicationUser>
+@{
+    ViewData["Title"] = "Teachers";
+    var assignments = ViewBag.Assignments as List<PupilCare.Models.TeacherAssignment> ?? new();
+    var classes = ViewBag.Classes as List<PupilCare.Models.ClassLevel> ?? new();
+}
+
+<div class="dashboard-container">
+    <div class="dashboard-header split-header">
+        <h2>Teachers</h2>
+        <a asp-action="CreateTeacher" class="btn btn-primary">Create Teacher</a>
+    </div>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="panel"><div class="panel-body text-danger">@TempData["ErrorMessage"]</div></div>
+    }
+
+    <div class="panel">
+        <div class="panel-header"><h5 class="panel-title">Teacher Accounts</h5></div>
+        <div class="panel-body-nopad">
+            <table class="data-table">
+                <thead><tr><th>Name</th><th>Email</th><th>Designation</th><th>Assignments</th></tr></thead>
+                <tbody>
+                @foreach (var teacher in Model)
+                {
+                    <tr>
+                        <td>@teacher.FullName</td>
+                        <td>@teacher.Email</td>
+                        <td>@teacher.Designation</td>
+                        <td>@assignments.Count(a => a.TeacherId == teacher.Id)</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="details-grid">
+        <div class="panel">
+            <div class="panel-header"><h5 class="panel-title">Assign Teacher</h5></div>
+            <div class="panel-body">
+                <form asp-action="AssignTeacher" method="post">
+                    <div class="form-group">
+                        <label>Teacher</label>
+                        <select name="TeacherId" class="form-control" required>
+                            @foreach (var teacher in Model) { <option value="@teacher.Id">@teacher.FullName</option> }
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Section</label>
+                        <select name="ClassSectionId" class="form-control" required>
+                            @foreach (var cls in classes)
+                            {
+                                foreach (var sec in cls.Sections.OrderBy(s => s.Name))
+                                {
+                                    <option value="@sec.Id">@cls.Name - Section @sec.Name</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Subject</label>
+                        <select name="SubjectId" class="form-control" required>
+                            @foreach (var cls in classes)
+                            {
+                                foreach (var subject in cls.Subjects.OrderBy(s => s.Name))
+                                {
+                                    <option value="@subject.Id">@cls.Name - @subject.Name</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" type="submit">Assign</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header"><h5 class="panel-title">Class Teacher</h5></div>
+            <div class="panel-body">
+                <form asp-action="SetClassTeacher" method="post">
+                    <div class="form-group">
+                        <label>Class</label>
+                        <select name="ClassLevelId" class="form-control">
+                            @foreach (var cls in classes) { <option value="@cls.Id">@cls.Name</option> }
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Teacher</label>
+                        <select name="TeacherId" class="form-control">
+                            <option value="">No class teacher</option>
+                            @foreach (var teacher in Model) { <option value="@teacher.Id">@teacher.FullName</option> }
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" type="submit">Save</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header"><h5 class="panel-title">Current Assignments</h5></div>
+        <div class="panel-body-nopad">
+            <table class="data-table">
+                <thead><tr><th>Teacher</th><th>Class</th><th>Section</th><th>Subject</th></tr></thead>
+                <tbody>
+                @foreach (var item in assignments)
+                {
+                    <tr>
+                        <td>@item.Teacher.FullName</td>
+                        <td>@item.ClassSection.ClassLevel.Name</td>
+                        <td>@item.ClassSection.Name</td>
+                        <td>@item.Subject.Name</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

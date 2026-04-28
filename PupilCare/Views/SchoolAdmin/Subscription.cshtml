@@ -1,0 +1,91 @@
+@model PupilCare.Models.School
+@{
+    ViewData["Title"] = "Manage Subscription";
+    var plans = ViewBag.Plans as List<PupilCare.Models.SubscriptionPlan> ?? new List<PupilCare.Models.SubscriptionPlan>();
+}
+
+<div class="dashboard-container">
+    <div class="dashboard-header split-header">
+        <h2>@ViewData["Title"]</h2>
+    </div>
+
+    <!-- Current Subscription Status -->
+    <div class="panel">
+        <div class="panel-header">
+            <h5 class="panel-title">Current Status</h5>
+        </div>
+        <div class="panel-body">
+            <table class="info-table">
+                <tr>
+                    <th style="width: 25%;">School Name:</th>
+                    <td>@Model.Name</td>
+                </tr>
+                <tr>
+                    <th>Approval Status:</th>
+                    <td>
+                        @if (Model.IsApproved) { <span class="status-badge status-approved">Approved</span> }
+                        else { <span class="status-badge status-pending">Pending Approval</span> }
+                    </td>
+                </tr>
+                <tr>
+                    <th>Subscription Status:</th>
+                    <td>
+                        @if (Model.SubscriptionExpiry.HasValue && Model.SubscriptionExpiry > DateTime.UtcNow)
+                        {
+                            var daysLeft = (Model.SubscriptionExpiry.Value - DateTime.UtcNow).Days;
+                            <span class="sub-status sub-active">Active</span>
+                            <span class="text-muted" style="margin-left: 10px;">
+                                Expires on @Model.SubscriptionExpiry.Value.ToString("dd MMM yyyy") (@daysLeft days remaining)
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="sub-status sub-expired">Expired / No Active Subscription</span>
+                        }
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="dashboard-header mt-4">
+        <h3>Available Subscription Plans</h3>
+        <p class="text-muted">Choose a plan to renew or extend your subscription.</p>
+    </div>
+
+    <!-- Plans Grid -->
+    <div class="plans-grid">
+        @if (plans.Any())
+        {
+            foreach (var plan in plans)
+            {
+                <div class="plan-card plan-active">
+                    <div class="plan-header">
+                        <h5 class="plan-title">@plan.Name</h5>
+                    </div>
+                    <div class="plan-body">
+                        <h2 class="plan-price">৳@plan.Price.ToString("0.00")</h2>
+                        <p class="plan-duration">
+                            Duration: @plan.DurationDays Days @(plan.DurationMinutes > 0 ? $" {plan.DurationMinutes} Mins" : "")
+                        </p>
+                        <p class="plan-desc" style="color: var(--color-text-muted);">@plan.Description</p>
+                    </div>
+                    <div class="plan-footer" style="justify-content: center;">
+                        <form asp-action="InitiatePayment" method="post" style="width: 100%;">
+                            <input type="hidden" name="planId" value="@plan.Id" />
+                            <button type="submit" class="btn btn-primary" style="width: 100%;">Subscribe Now</button>
+                        </form>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="panel" style="grid-column: 1 / -1;">
+                <div class="panel-body text-center">
+                    <p class="text-muted">No subscription plans are currently available. Please contact administration.</p>
+                </div>
+            </div>
+        }
+    </div>
+</div>
