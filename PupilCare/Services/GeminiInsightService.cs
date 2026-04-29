@@ -35,7 +35,7 @@ namespace PupilCare.Services
             try
             {
                 var gemini = _config.GetSection("Gemini");
-                var apiKey = gemini["ApiKey"] ?? Environment.GetEnvironmentVariable("GEMINI_API_KEY");
+                var apiKey = Environment.GetEnvironmentVariable("GEMINI_API_KEY") ?? gemini["ApiKey"];
                 var model = gemini["Model"] ?? "gemini-flash-latest";
                 var endpointTemplate = gemini["Endpoint"]
                     ?? "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent";
@@ -128,14 +128,14 @@ Be empathetic, professional, and constructive. Keep the response focused and pra
 **Scope:** {scope}
 **Generated:** {DateTime.Now:dd MMM yyyy, hh:mm tt}
 
-> *AI analysis is currently unavailable. Please configure `Gemini:ApiKey` in appsettings.json or set the `GEMINI_API_KEY` environment variable to enable automatic insights.*
+> *AI analysis is currently unavailable. Please configure `Gemini:ApiKey` with .NET user secrets or set the `GEMINI_API_KEY` environment variable to enable automatic insights.*
 
 **Data Summary:**
 The system has collected the relevant student data for this scope. Once the AI service is configured, it will analyze attendance patterns, academic performance trends, behavioral records, and provide actionable recommendations.
 
 **To enable AI Insights:**
 1. Obtain a Gemini API key from [Google AI Studio](https://aistudio.google.com)
-2. Add it to `appsettings.json` under `Gemini:ApiKey`, or set the `GEMINI_API_KEY` environment variable
+2. Store it with .NET user secrets under `Gemini:ApiKey`, or set the `GEMINI_API_KEY` environment variable
 3. Re-generate this insight
 """;
         }
