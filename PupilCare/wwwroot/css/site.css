@@ -530,6 +530,70 @@ label {
     max-width: 800px;
 }
 
+.insight-builder {
+    max-width: 920px;
+}
+
+.insight-path {
+    display: grid;
+    gap: 1rem;
+}
+
+.insight-step {
+    border: 1px solid var(--color-border);
+    padding: 1rem;
+    background: var(--color-bg-surface);
+}
+
+.insight-step.is-hidden {
+    display: none;
+}
+
+.insight-step h3 {
+    margin: 0 0 0.25rem;
+    font-size: 1rem;
+    color: var(--color-primary-dark);
+}
+
+.insight-step p {
+    margin: 0 0 0.9rem;
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+}
+
+.choice-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+.choice-tile {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-height: 44px;
+    margin: 0;
+    padding: 0.7rem 0.8rem;
+    border: 1px solid var(--color-border);
+    cursor: pointer;
+    color: var(--color-text-main);
+    background: var(--color-bg);
+}
+
+.choice-tile:has(input:checked) {
+    border-color: var(--color-primary);
+    background: var(--color-primary-lighter);
+    color: var(--color-primary-dark);
+}
+
+.insight-summary {
+    margin-top: 1rem;
+    padding: 0.8rem 1rem;
+    border: 1px solid var(--color-border);
+    color: var(--color-text-muted);
+    background: var(--color-bg);
+}
+
 /* Tables */
 .table-container {
     overflow-x: auto;

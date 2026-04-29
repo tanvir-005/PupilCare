@@ -35,14 +35,14 @@ namespace PupilCare.Services
             try
             {
                 var gemini = _config.GetSection("Gemini");
-                var apiKey = gemini["ApiKey"];
-                var model = gemini["Model"] ?? "gemini-2.0-flash";
+                var apiKey = gemini["ApiKey"] ?? Environment.GetEnvironmentVariable("GEMINI_API_KEY");
+                var model = gemini["Model"] ?? "gemini-flash-latest";
                 var endpointTemplate = gemini["Endpoint"]
                     ?? "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent";
 
                 var endpoint = endpointTemplate.Replace("{model}", model);
 
-                if (string.IsNullOrEmpty(apiKey))
+                if (string.IsNullOrWhiteSpace(apiKey))
                 {
                     return BuildFallbackInsight(insightScope, scopeLabel, structuredData);
                 }
@@ -58,10 +58,10 @@ Data:
 {dataJson}
 
 Please provide a comprehensive analysis with the following sections:
-1. **Overall Summary** — Key statistics and general performance overview
-2. **Strengths** — Notable positives observed in the data
-3. **Areas of Concern** — Issues that need attention (poor attendance, low marks, behavioral patterns)
-4. **Actionable Recommendations** — Specific steps teachers or admin should take
+1. **Overall Summary** - Key statistics and general performance overview
+2. **Strengths** - Notable positives observed in the data
+3. **Areas of Concern** - Issues that need attention (poor attendance, low marks, behavioral patterns)
+4. **Actionable Recommendations** - Specific steps teachers or admin should take
 
 Be empathetic, professional, and constructive. Keep the response focused and practical.
 """;
@@ -84,11 +84,19 @@ Be empathetic, professional, and constructive. Keep the response focused and pra
 
                 var client = _httpClientFactory.CreateClient();
                 var json = JsonSerializer.Serialize(requestBody);
-                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                using var request = new HttpRequestMessage(HttpMethod.Post, endpoint)
+                {
+                    Content = new StringContent(json, Encoding.UTF8, "application/json")
+                };
+                request.Headers.Add("X-goog-api-key", apiKey);
 
-                var requestUrl = $"{endpoint}?key={apiKey}";
-                var response = await client.PostAsync(requestUrl, content);
+                var response = await client.SendAsync(request);
                 var responseBody = await response.Content.ReadAsStringAsync();
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogWarning("Gemini API returned {StatusCode}: {Body}", response.StatusCode, responseBody);
+                    return BuildFallbackInsight(insightScope, scopeLabel, structuredData);
+                }
 
                 var parsed = JsonDocument.Parse(responseBody);
                 if (parsed.RootElement.TryGetProperty("candidates", out var candidates) &&
@@ -116,18 +124,18 @@ Be empathetic, professional, and constructive. Keep the response focused and pra
         {
             // When no API key is configured, return a structured placeholder
             return $"""
-## AI Insight — {label}
+## AI Insight - {label}
 **Scope:** {scope}
 **Generated:** {DateTime.Now:dd MMM yyyy, hh:mm tt}
 
-> *AI analysis is currently unavailable. Please configure a Gemini API key in appsettings.json to enable automatic insights.*
+> *AI analysis is currently unavailable. Please configure `Gemini:ApiKey` in appsettings.json or set the `GEMINI_API_KEY` environment variable to enable automatic insights.*
 
 **Data Summary:**
 The system has collected the relevant student data for this scope. Once the AI service is configured, it will analyze attendance patterns, academic performance trends, behavioral records, and provide actionable recommendations.
 
 **To enable AI Insights:**
 1. Obtain a Gemini API key from [Google AI Studio](https://aistudio.google.com)
-2. Add it to `appsettings.json` under `Gemini:ApiKey`
+2. Add it to `appsettings.json` under `Gemini:ApiKey`, or set the `GEMINI_API_KEY` environment variable
 3. Re-generate this insight
 """;
         }

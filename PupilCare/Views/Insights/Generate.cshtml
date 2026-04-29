@@ -3,42 +3,264 @@
     ViewData["Title"] = "Generate Insight";
 }
 
-<div class="panel form-panel">
-    <div class="panel-header"><h2 class="panel-title">Generate Insight</h2></div>
+<div class="panel form-panel insight-builder">
+    <div class="panel-header">
+        <h2 class="panel-title">Generate Insight</h2>
+    </div>
     <div class="panel-body">
-        <form asp-action="Generate" method="post">
+        <form asp-action="Generate" method="post" id="insightForm">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="InsightScope">Scope</label>
-                <select asp-for="InsightScope" class="form-control">
-                    <option value="Student">One student</option>
-                    <option value="SectionSubject">Section and subject</option>
-                    <option value="ClassSubject">Class and subject</option>
-                    <option value="Section">Section, all subjects</option>
-                    <option value="Class">Class, all sections and subjects</option>
-                    <option value="School">Entire school</option>
-                </select>
+            <input asp-for="InsightScope" type="hidden" id="InsightScope" />
+
+            <div class="insight-path">
+                <section class="insight-step" data-step="school">
+                    <div>
+                        <h3>Whole school?</h3>
+                        <p>Summarize every class, section, subject, and student record in this school.</p>
+                    </div>
+                    <div class="choice-row">
+                        <label class="choice-tile">
+                            <input type="radio" name="schoolChoice" value="yes" />
+                            <span>Yes</span>
+                        </label>
+                        <label class="choice-tile">
+                            <input type="radio" name="schoolChoice" value="no" />
+                            <span>No</span>
+                        </label>
+                    </div>
+                </section>
+
+                <section class="insight-step is-hidden" data-step="class">
+                    <div class="form-group">
+                        <label asp-for="ClassLevelId">Class</label>
+                        <select asp-for="ClassLevelId" class="form-control" id="ClassLevelId">
+                            <option value="">Choose a class</option>
+                            @foreach (var item in ViewBag.ClassOptions)
+                            {
+                                <option value="@item.Id">@item.Name</option>
+                            }
+                        </select>
+                        <span asp-validation-for="ClassLevelId" class="text-danger"></span>
+                    </div>
+                    <div>
+                        <h3>Whole class?</h3>
+                        <p>Include all sections, subjects, and students from this class.</p>
+                    </div>
+                    <div class="choice-row">
+                        <label class="choice-tile">
+                            <input type="radio" name="classChoice" value="yes" />
+                            <span>Yes</span>
+                        </label>
+                        <label class="choice-tile">
+                            <input type="radio" name="classChoice" value="no" />
+                            <span>No</span>
+                        </label>
+                    </div>
+                </section>
+
+                <section class="insight-step is-hidden" data-step="section">
+                    <div class="form-group">
+                        <label asp-for="ClassSectionId">Section</label>
+                        <select asp-for="ClassSectionId" class="form-control" id="ClassSectionId">
+                            <option value="">Choose a section</option>
+                            @foreach (var item in ViewBag.SectionOptions)
+                            {
+                                <option value="@item.Id" data-class-id="@item.ClassLevelId">@item.Label</option>
+                            }
+                        </select>
+                        <span asp-validation-for="ClassSectionId" class="text-danger"></span>
+                    </div>
+                    <div>
+                        <h3>Whole section?</h3>
+                        <p>Include every subject and every student in this section.</p>
+                    </div>
+                    <div class="choice-row">
+                        <label class="choice-tile">
+                            <input type="radio" name="sectionChoice" value="yes" />
+                            <span>Yes</span>
+                        </label>
+                        <label class="choice-tile">
+                            <input type="radio" name="sectionChoice" value="no" />
+                            <span>No</span>
+                        </label>
+                    </div>
+                </section>
+
+                <section class="insight-step is-hidden" data-step="subject">
+                    <div class="form-group">
+                        <label asp-for="SubjectId">Subject</label>
+                        <select asp-for="SubjectId" class="form-control" id="SubjectId">
+                            <option value="">Choose a subject</option>
+                            @foreach (var item in ViewBag.SubjectOptions)
+                            {
+                                <option value="@item.Id" data-class-id="@item.ClassLevelId">@item.Label</option>
+                            }
+                        </select>
+                        <span asp-validation-for="SubjectId" class="text-danger"></span>
+                    </div>
+                    <div>
+                        <h3>Whole subject in this section?</h3>
+                        <p>Include all students in the selected section for this subject.</p>
+                    </div>
+                    <div class="choice-row">
+                        <label class="choice-tile">
+                            <input type="radio" name="subjectChoice" value="yes" />
+                            <span>Yes</span>
+                        </label>
+                        <label class="choice-tile">
+                            <input type="radio" name="subjectChoice" value="no" />
+                            <span>No</span>
+                        </label>
+                    </div>
+                </section>
+
+                <section class="insight-step is-hidden" data-step="student">
+                    <div class="form-group">
+                        <label asp-for="StudentId">Student</label>
+                        <select asp-for="StudentId" class="form-control" id="StudentId">
+                            <option value="">Choose a student</option>
+                            @foreach (var item in ViewBag.StudentOptions)
+                            {
+                                <option value="@item.Id" data-section-id="@item.ClassSectionId">@item.Label</option>
+                            }
+                        </select>
+                        <span asp-validation-for="StudentId" class="text-danger"></span>
+                    </div>
+                </section>
             </div>
-            <div class="form-group">
-                <label asp-for="StudentId">Student</label>
-                <select asp-for="StudentId" asp-items="ViewBag.Students" class="form-control"><option value="">Not selected</option></select>
-            </div>
-            <div class="form-group">
-                <label asp-for="ClassLevelId">Class</label>
-                <select asp-for="ClassLevelId" asp-items="ViewBag.Classes" class="form-control"><option value="">Not selected</option></select>
-            </div>
-            <div class="form-group">
-                <label asp-for="ClassSectionId">Section</label>
-                <select asp-for="ClassSectionId" asp-items="ViewBag.Sections" class="form-control"><option value="">Not selected</option></select>
-            </div>
-            <div class="form-group">
-                <label asp-for="SubjectId">Subject</label>
-                <select asp-for="SubjectId" asp-items="ViewBag.Subjects" class="form-control"><option value="">Not selected</option></select>
-            </div>
+
+            <div class="insight-summary" id="insightSummary"></div>
+
             <div class="form-actions">
                 <a asp-action="Index" class="btn btn-secondary">Cancel</a>
-                <button type="submit" class="btn btn-primary">Generate</button>
+                <button type="submit" class="btn btn-primary" id="generateButton">Generate</button>
             </div>
         </form>
     </div>
 </div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (() => {
+            const scopeInput = document.getElementById("InsightScope");
+            const classSelect = document.getElementById("ClassLevelId");
+            const sectionSelect = document.getElementById("ClassSectionId");
+            const subjectSelect = document.getElementById("SubjectId");
+            const studentSelect = document.getElementById("StudentId");
+            const generateButton = document.getElementById("generateButton");
+            const summary = document.getElementById("insightSummary");
+
+            const steps = {
+                class: document.querySelector('[data-step="class"]'),
+                section: document.querySelector('[data-step="section"]'),
+                subject: document.querySelector('[data-step="subject"]'),
+                student: document.querySelector('[data-step="student"]')
+            };
+
+            function checked(name) {
+                return document.querySelector(`input[name="${name}"]:checked`)?.value;
+            }
+
+            function setChecked(name, value) {
+                const input = document.querySelector(`input[name="${name}"][value="${value}"]`);
+                if (input) input.checked = true;
+            }
+
+            function show(step, visible) {
+                steps[step].classList.toggle("is-hidden", !visible);
+            }
+
+            function resetHiddenSelect(select, visible) {
+                select.disabled = !visible;
+                if (!visible) select.value = "";
+            }
+
+            function filterOptions(select, dataName, expectedValue) {
+                let selectedStillVisible = false;
+                Array.from(select.options).forEach(option => {
+                    if (!option.value) return;
+                    const visible = option.dataset[dataName] === expectedValue;
+                    option.hidden = !visible;
+                    option.disabled = !visible;
+                    if (visible && option.selected) selectedStillVisible = true;
+                });
+                if (!selectedStillVisible) select.value = "";
+            }
+
+            function selectedText(select) {
+                return select.options[select.selectedIndex]?.text || "";
+            }
+
+            function update() {
+                const schoolNo = checked("schoolChoice") === "no";
+                const hasClass = schoolNo && classSelect.value;
+                const classNo = checked("classChoice") === "no";
+                const hasSection = hasClass && classNo && sectionSelect.value;
+                const sectionNo = checked("sectionChoice") === "no";
+                const hasSubject = hasSection && sectionNo && subjectSelect.value;
+                const subjectNo = checked("subjectChoice") === "no";
+
+                show("class", schoolNo);
+                resetHiddenSelect(classSelect, schoolNo);
+
+                filterOptions(sectionSelect, "classId", classSelect.value);
+                show("section", hasClass && classNo);
+                resetHiddenSelect(sectionSelect, hasClass && classNo);
+
+                filterOptions(subjectSelect, "classId", classSelect.value);
+                show("subject", hasSection && sectionNo);
+                resetHiddenSelect(subjectSelect, hasSection && sectionNo);
+
+                filterOptions(studentSelect, "sectionId", sectionSelect.value);
+                show("student", hasSubject && subjectNo);
+                resetHiddenSelect(studentSelect, hasSubject && subjectNo);
+
+                let scope = "";
+                let label = "";
+                if (checked("schoolChoice") === "yes") {
+                    scope = "School";
+                    label = "Whole school";
+                } else if (hasClass && checked("classChoice") === "yes") {
+                    scope = "Class";
+                    label = selectedText(classSelect);
+                } else if (hasSection && checked("sectionChoice") === "yes") {
+                    scope = "Section";
+                    label = selectedText(sectionSelect);
+                } else if (hasSubject && checked("subjectChoice") === "yes") {
+                    scope = "SectionSubject";
+                    label = `${selectedText(sectionSelect)} - ${selectedText(subjectSelect).split(" - ").pop()}`;
+                } else if (hasSubject && subjectNo && studentSelect.value) {
+                    scope = "Student";
+                    label = `${selectedText(studentSelect)} - ${selectedText(subjectSelect).split(" - ").pop()}`;
+                }
+
+                scopeInput.value = scope;
+                summary.textContent = scope ? `Insight will be generated for: ${label}` : "Choose the path for this insight.";
+                generateButton.disabled = !scope;
+            }
+
+            function restoreFromModel() {
+                const initialScope = scopeInput.value || "School";
+                if (initialScope === "School") {
+                    setChecked("schoolChoice", "yes");
+                } else {
+                    setChecked("schoolChoice", "no");
+                    if (initialScope === "Class") setChecked("classChoice", "yes");
+                    if (["Section", "SectionSubject", "Student"].includes(initialScope)) {
+                        setChecked("classChoice", "no");
+                        if (initialScope === "Section") setChecked("sectionChoice", "yes");
+                    }
+                    if (["SectionSubject", "Student"].includes(initialScope)) {
+                        setChecked("sectionChoice", "no");
+                        setChecked("subjectChoice", initialScope === "SectionSubject" ? "yes" : "no");
+                    }
+                }
+            }
+
+            document.querySelectorAll("input, select").forEach(input => input.addEventListener("change", update));
+            restoreFromModel();
+            update();
+        })();
+    </script>
+}
