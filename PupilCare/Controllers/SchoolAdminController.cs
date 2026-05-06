@@ -392,7 +392,30 @@ namespace PupilCare.Controllers
             var plans = await _context.SubscriptionPlans.Where(p => p.IsActive).ToListAsync();
             ViewBag.Plans = plans;
 
+            var payments = await _context.SubscriptionPayments
+                .Include(p => p.Plan)
+                .Where(p => p.SchoolId == user.SchoolId)
+                .OrderByDescending(p => p.InitiatedAt)
+                .ToListAsync();
+            ViewBag.Payments = payments;
+
             return View(school);
+        }
+
+        public async Task<IActionResult> Receipt(int id)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user?.SchoolId == null) return Unauthorized();
+
+            var payment = await _context.SubscriptionPayments
+                .Include(p => p.School)
+                .Include(p => p.Plan)
+                .FirstOrDefaultAsync(p => p.Id == id && p.SchoolId == user.SchoolId);
+
+            if (payment == null) return NotFound();
+            if (payment.Status != "Success") return BadRequest("Receipt is only available for successful payments.");
+
+            return View(payment);
         }
 
         private async Task<List<ApplicationUser>> GetSchoolTeachersAsync(int schoolId)
@@ -448,7 +471,7 @@ namespace PupilCare.Controllers
             if (school == null || plan == null || !plan.IsActive)
                 return BadRequest("Invalid plan or school.");
 
-            var transactionId = "TXN" + DateTime.UtcNow.Ticks;
+            var transactionId = Guid.NewGuid().ToString();
 
             var payment = new SubscriptionPayment
             {
@@ -462,10 +485,16 @@ namespace PupilCare.Controllers
             _context.SubscriptionPayments.Add(payment);
             await _context.SaveChangesAsync();
 
+            var successUrl = Url.Action("Success", "Payment", null, Request.Scheme) ?? "";
+            var failUrl = Url.Action("Fail", "Payment", null, Request.Scheme) ?? "";
+            var cancelUrl = Url.Action("Cancel", "Payment", null, Request.Scheme) ?? "";
+            var ipnUrl = Url.Action("IPN", "Payment", null, Request.Scheme) ?? "";
+
             var gatewayUrl = await _paymentService.InitiatePaymentAsync(
                 school.Id, plan.Id, plan.Price,
                 transactionId, user.FullName ?? "School Admin",
-                user.Email ?? "admin@school.com", school.EIIN ?? "000000");
+                user.Email ?? "admin@school.com", school.EIIN ?? "000000",
+                successUrl, failUrl, cancelUrl, ipnUrl);
 
             if (!string.IsNullOrEmpty(gatewayUrl))
             {
@@ -488,69 +517,5 @@ namespace PupilCare.Controllers
             return RedirectToAction("Subscription");
         }
 
-        [AllowAnonymous]
-        [HttpPost]
-        [IgnoreAntiforgeryToken]
-        public async Task<IActionResult> PaymentSuccess([FromForm] string tran_id, [FromForm] string val_id, [FromForm] string amount, [FromForm] string currency)
-        {
-            var payment = await _context.SubscriptionPayments
-                .Include(p => p.School)
-                .Include(p => p.Plan)
-                .FirstOrDefaultAsync(p => p.TransactionId == tran_id);
-
-            if (payment == null) return NotFound();
-
-            var isValid = await _paymentService.ValidatePaymentAsync(val_id, amount, currency);
-
-            if (isValid)
-            {
-                payment.Status = "Success";
-                payment.CompletedAt = DateTime.UtcNow;
-                payment.GatewayTransactionId = val_id;
-
-                var school = payment.School;
-                var plan = payment.Plan;
-
-                var baseDate = (school.SubscriptionExpiry.HasValue && school.SubscriptionExpiry.Value > DateTime.UtcNow) 
-                    ? school.SubscriptionExpiry.Value 
-                    : DateTime.UtcNow;
-                
-                school.SubscriptionExpiry = baseDate.AddDays(plan.DurationDays).AddMinutes(plan.DurationMinutes);
-                payment.NewExpiryDate = school.SubscriptionExpiry;
-
-                await _context.SaveChangesAsync();
-                return RedirectToAction("Subscription");
-            }
-
-            return RedirectToAction("PaymentFail");
-        }
-
-        [AllowAnonymous]
-        [HttpPost]
-        [IgnoreAntiforgeryToken]
-        public async Task<IActionResult> PaymentFail([FromForm] string tran_id)
-        {
-            var payment = await _context.SubscriptionPayments.FirstOrDefaultAsync(p => p.TransactionId == tran_id);
-            if (payment != null)
-            {
-                payment.Status = "Failed";
-                await _context.SaveChangesAsync();
-            }
-            return RedirectToAction("Subscription");
-        }
-
-        [AllowAnonymous]
-        [HttpPost]
-        [IgnoreAntiforgeryToken]
-        public async Task<IActionResult> PaymentCancel([FromForm] string tran_id)
-        {
-            var payment = await _context.SubscriptionPayments.FirstOrDefaultAsync(p => p.TransactionId == tran_id);
-            if (payment != null)
-            {
-                payment.Status = "Cancelled";
-                await _context.SaveChangesAsync();
-            }
-            return RedirectToAction("Subscription");
-        }
     }
 }

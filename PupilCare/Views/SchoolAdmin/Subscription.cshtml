@@ -73,7 +73,7 @@
                     <div class="plan-footer" style="justify-content: center;">
                         <form asp-action="InitiatePayment" method="post" style="width: 100%;">
                             <input type="hidden" name="planId" value="@plan.Id" />
-                            <button type="submit" class="btn btn-primary" style="width: 100%;">Subscribe Now</button>
+                            <button type="submit" class="btn btn-primary" style="width: 100%;">Pay with SSLCOMMERZ</button>
                         </form>
                     </div>
                 </div>
@@ -87,5 +87,66 @@
                 </div>
             </div>
         }
+    </div>
+    <div class="dashboard-header mt-5">
+        <h3>Payment History</h3>
+        <p class="text-muted">Review your past subscription payments and download receipts.</p>
+    </div>
+
+    <div class="panel">
+        <div class="panel-body p-0">
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Plan</th>
+                            <th>Amount</th>
+                            <th>Transaction ID</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            var payments = ViewBag.Payments as List<PupilCare.Models.SubscriptionPayment> ?? new List<PupilCare.Models.SubscriptionPayment>();
+                        }
+                        @if (payments.Any())
+                        {
+                            foreach (var p in payments)
+                            {
+                                <tr>
+                                    <td>@p.InitiatedAt.ToLocalTime().ToString("dd MMM yyyy HH:mm")</td>
+                                    <td>@p.Plan.Name</td>
+                                    <td>৳@p.Amount.ToString("0.00")</td>
+                                    <td><small class="text-muted">@p.TransactionId</small></td>
+                                    <td>
+                                        <span class="status-badge status-@(p.Status.ToLower())">@p.Status</span>
+                                    </td>
+                                    <td>
+                                        @if (p.Status == "Success")
+                                        {
+                                            <a asp-action="Receipt" asp-route-id="@p.Id" class="btn btn-sm btn-secondary" target="_blank">
+                                                Receipt
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center py-4 text-muted">No payment history found.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>

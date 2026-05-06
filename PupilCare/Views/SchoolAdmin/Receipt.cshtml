@@ -1,0 +1,239 @@
+@model PupilCare.Models.SubscriptionPayment
+@{
+    Layout = null; // No layout for printable receipt
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Receipt - @Model.TransactionId</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #95a5a6;
+            --border: #dee2e6;
+            --bg-alt: #f8f9fa;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 40px;
+            background-color: #f4f7f6;
+        }
+        .receipt-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 40px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            border-top: 8px solid var(--primary);
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 40px;
+            border-bottom: 2px solid var(--bg-alt);
+            padding-bottom: 20px;
+        }
+        .logo h1 {
+            margin: 0;
+            color: var(--primary);
+            font-size: 28px;
+            letter-spacing: 1px;
+        }
+        .logo p {
+            margin: 0;
+            color: var(--secondary);
+            font-size: 14px;
+        }
+        .invoice-details {
+            text-align: right;
+        }
+        .invoice-details h2 {
+            margin: 0;
+            color: var(--primary);
+            text-transform: uppercase;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+        .info-box h3 {
+            font-size: 14px;
+            text-transform: uppercase;
+            color: var(--secondary);
+            margin-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 5px;
+        }
+        .info-box p {
+            margin: 2px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 40px;
+        }
+        th {
+            background-color: var(--bg-alt);
+            text-align: left;
+            padding: 12px;
+            border-bottom: 2px solid var(--border);
+            color: var(--primary);
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+        td {
+            padding: 15px 12px;
+            border-bottom: 1px solid var(--border);
+        }
+        .totals {
+            margin-left: auto;
+            width: 300px;
+        }
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+        }
+        .total-row.grand-total {
+            border-top: 2px solid var(--primary);
+            margin-top: 10px;
+            font-weight: bold;
+            font-size: 18px;
+            color: var(--primary);
+        }
+        .footer {
+            margin-top: 60px;
+            text-align: center;
+            color: var(--secondary);
+            font-size: 13px;
+        }
+        .status-stamp {
+            display: inline-block;
+            margin-top: 20px;
+            float: right;
+            border: 4px solid #27ae60;
+            color: #27ae60;
+            padding: 8px 16px;
+            font-size: 24px;
+            font-weight: bold;
+            text-transform: uppercase;
+            transform: rotate(-12deg);
+            opacity: 0.3;
+            border-radius: 8px;
+            pointer-events: none;
+        }
+        @@media print {
+            body { background: none; padding: 0; }
+            .receipt-container { box-shadow: none; border: 1px solid var(--border); }
+            .no-print { display: none; }
+        }
+        .actions {
+            max-width: 800px;
+            margin: 20px auto;
+            text-align: right;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: var(--primary);
+            color: #fff;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="actions no-print">
+        <button onclick="window.print()" class="btn">Print Receipt</button>
+    </div>
+
+    <div class="receipt-container" style="position: relative;">
+        
+        <div class="header">
+            <div class="logo">
+                <h1>PUPILCARE</h1>
+                <p>Advanced School Management System</p>
+            </div>
+            <div class="invoice-details">
+                <h2>RECEIPT</h2>
+                <p><strong>Transaction ID:</strong> @Model.TransactionId</p>
+                <p><strong>Date:</strong> @Model.CompletedAt?.ToLocalTime().ToString("dd MMM yyyy")</p>
+            </div>
+        </div>
+
+        <div class="info-grid">
+            <div class="info-box">
+                <h3>Issued To:</h3>
+                <p><strong>@Model.School.Name</strong></p>
+                <p>EIIN: @Model.School.EIIN</p>
+                <p>@Model.School.Address</p>
+            </div>
+            <div class="info-box">
+                <h3>Payment Details:</h3>
+                <p><strong>Method:</strong> SSLCommerz</p>
+                <p><strong>Gateway Tran ID:</strong> @Model.GatewayTransactionId</p>
+                <p><strong>Currency:</strong> BDT</p>
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Description</th>
+                    <th>Duration</th>
+                    <th style="text-align: right;">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <strong>Subscription Plan: @Model.Plan.Name</strong><br>
+                        <small>Renewed subscription for the school management system.</small>
+                    </td>
+                    <td>@Model.Plan.DurationDays Days</td>
+                    <td style="text-align: right;">৳@Model.Amount.ToString("0.00")</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="totals">
+            <div class="total-row">
+                <span>Subtotal:</span>
+                <span>৳@Model.Amount.ToString("0.00")</span>
+            </div>
+            <div class="total-row">
+                <span>Tax (0%):</span>
+                <span>৳0.00</span>
+            </div>
+            <div class="total-row grand-total">
+                <span>Total Amount:</span>
+                <span>৳@Model.Amount.ToString("0.00")</span>
+            </div>
+            <div class="status-stamp">PAID</div>
+            <div style="clear: both;"></div>
+        </div>
+
+        <div class="info-box" style="margin-top: 40px;">
+            <h3>New Subscription Period:</h3>
+            <p>Your subscription has been extended until <strong>@Model.NewExpiryDate?.ToLocalTime().ToString("dd MMMM yyyy HH:mm")</strong></p>
+        </div>
+
+        <div class="footer">
+            <p>Thank you for choosing PupilCare. This is a computer-generated receipt and does not require a physical signature.</p>
+            <p>Support: support@pupilcare.com | Web: www.pupilcare.com</p>
+        </div>
+    </div>
+</body>
+</html>
