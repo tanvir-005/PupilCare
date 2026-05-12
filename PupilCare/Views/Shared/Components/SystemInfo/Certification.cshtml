@@ -1,0 +1,11 @@
+@model PupilCare.Models.SystemSetting
+<ul class="footer-list">
+    @if (!string.IsNullOrEmpty(Model.CertificationInfo))
+    {
+        <li>@Model.CertificationInfo</li>
+    }
+    else
+    {
+        <li>Standard Certified Student Management System</li>
+    }
+</ul>

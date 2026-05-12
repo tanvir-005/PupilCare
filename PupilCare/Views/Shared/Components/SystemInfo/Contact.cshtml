@@ -1,0 +1,15 @@
+@model PupilCare.Models.SystemSetting
+<div class="footer-contact-info mt-2 mb-2">
+    @if (!string.IsNullOrEmpty(Model.ContactEmail))
+    {
+        <div class="contact-item">
+            <span class="text-muted">Email:</span> @Model.ContactEmail
+        </div>
+    }
+    @if (!string.IsNullOrEmpty(Model.ContactPhone))
+    {
+        <div class="contact-item">
+            <span class="text-muted">Phone:</span> @Model.ContactPhone
+        </div>
+    }
+</div>

@@ -66,6 +66,28 @@ namespace PupilCare.Data
                 await context.SaveChangesAsync();
             }
 
+            // ── 3.5 System Settings ──────────────────────────────────────────────
+            if (!context.SystemSettings.Any())
+            {
+                context.SystemSettings.Add(new SystemSetting
+                {
+                    SystemName = "PupilCare",
+                    ContactEmail = "support@pupilcare.com",
+                    ContactPhone = "+880-1234-567890",
+                    Address = "123 Education Lane, Dhaka, Bangladesh",
+                    AboutUs = "PupilCare is a state-of-the-art Student Management System designed to empower educational institutions with AI-driven insights and streamlined administration.",
+                    Careers = "Join our team of innovators and educators to shape the future of educational technology. We are always looking for passionate developers and education experts.",
+                    Partners = "We collaborate with leading educational boards and technology providers to deliver the best experience for schools, teachers, and students.",
+                    PrivacyPolicy = "Your privacy is our priority. We employ industry-standard security measures to protect your data and ensure it is handled with the utmost care.",
+                    TermsAndConditions = "By using PupilCare, you agree to comply with our terms of service, ensuring a respectful and productive environment for all users.",
+                    CertificationInfo = "ISO 27001 Certified Student Management System. Trusted by 100+ institutions nationwide.",
+                    FacebookUrl = "https://facebook.com/pupilcare",
+                    TwitterUrl = "https://twitter.com/pupilcare",
+                    LinkedInUrl = "https://linkedin.com/company/pupilcare"
+                });
+                await context.SaveChangesAsync();
+            }
+
             // ── 4. Demo School ────────────────────────────────────────────────────
             School school;
             if (!context.Schools.Any())

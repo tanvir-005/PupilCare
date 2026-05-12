@@ -1,0 +1,76 @@
+@model PupilCare.Models.ContactMessage
+@{
+    ViewData["Title"] = "Message Details";
+}
+
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h2>@ViewData["Title"]</h2>
+    </div>
+
+    <partial name="_SuperAdminNav" />
+
+    <div class="panel">
+        <div class="panel-header">
+            <h5 class="panel-title">Inquiry from @Model.Name</h5>
+            <span class="text-muted">Received at: @Model.SentAt.ToLocalTime().ToString("f")</span>
+        </div>
+        <div class="panel-body">
+            <div class="message-meta">
+                <div class="meta-item">
+                    <label>From:</label>
+                    <span>@Model.Name (@Model.Email)</span>
+                </div>
+                <div class="meta-item">
+                    <label>Subject:</label>
+                    <span>@Model.Subject</span>
+                </div>
+            </div>
+            <hr />
+            <div class="message-content">
+                <label>Message Body:</label>
+                <div class="content-box">
+                    @Model.Message
+                </div>
+            </div>
+
+            @if (string.IsNullOrEmpty(Model.ReplyMessage))
+            {
+                <div class="reply-form mt-4">
+                    <h6 class="section-title">Send a Reply</h6>
+                    <form asp-action="ReplyMessage" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <div class="form-group">
+                            <textarea name="reply" class="form-control" rows="4" placeholder="Type your reply here..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary mt-2">Submit Reply</button>
+                    </form>
+                </div>
+            }
+            else
+            {
+                <div class="reply-section mt-4">
+                    <h6 class="section-title">Your Reply (@Model.RepliedAt?.ToLocalTime().ToString("g"))</h6>
+                    <div class="content-box reply-box">
+                        @Model.ReplyMessage
+                    </div>
+                </div>
+            }
+        </div>
+        <div class="panel-footer d-flex justify-content-between">
+            <form asp-action="DeleteMessage" asp-route-id="@Model.Id" method="post" onsubmit="return confirm('Delete this message?');">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-danger">Delete Message</button>
+            </form>
+            <span class="text-muted">Status: @(Model.IsRead ? "Read" : "New")</span>
+        </div>
+    </div>
+</div>
+
+<style>
+    .message-meta { display: grid; gap: 10px; margin-bottom: 20px; }
+    .meta-item label { font-weight: 600; color: var(--text-muted); width: 80px; display: inline-block; }
+    .content-box { padding: 20px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e9ecef; white-space: pre-wrap; line-height: 1.6; margin-top: 10px; }
+    .reply-box { border-left: 4px solid var(--primary-color); background: #f0f7ff; }
+</style>

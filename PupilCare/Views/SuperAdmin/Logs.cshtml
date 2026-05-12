@@ -1,0 +1,82 @@
+@{
+    ViewData["Title"] = "System Logs & Activity";
+    var recentPayments = ViewBag.RecentPayments as IEnumerable<PupilCare.Models.SubscriptionPayment>;
+    var recentSchools = ViewBag.RecentSchools as IEnumerable<PupilCare.Models.School>;
+}
+
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h2>@ViewData["Title"]</h2>
+    </div>
+
+    <partial name="_SuperAdminNav" />
+
+    <div class="dashboard-layout">
+        <!-- Recent Schools -->
+        <div class="panel half">
+            <div class="panel-header">
+                <h5 class="panel-title">Recent School Signups</h5>
+            </div>
+            <div class="panel-body">
+                <ul class="activity-list">
+                    @if (recentSchools != null && recentSchools.Any())
+                    {
+                        foreach (var school in recentSchools)
+                        {
+                            <li class="activity-item">
+                                <div class="activity-icon icon-school">🏢</div>
+                                <div class="activity-details">
+                                    <strong>@school.Name</strong> registered.
+                                    <span class="activity-time">Status: @(school.IsApproved ? "Approved" : "Pending")</span>
+                                </div>
+                            </li>
+                        }
+                    }
+                    else
+                    {
+                        <li class="empty-state">No recent signups.</li>
+                    }
+                </ul>
+            </div>
+        </div>
+
+        <!-- Recent Payments -->
+        <div class="panel half">
+            <div class="panel-header">
+                <h5 class="panel-title">Recent Subscriptions</h5>
+            </div>
+            <div class="panel-body">
+                <ul class="activity-list">
+                    @if (recentPayments != null && recentPayments.Any())
+                    {
+                        foreach (var payment in recentPayments)
+                        {
+                            <li class="activity-item">
+                                <div class="activity-icon icon-payment">💰</div>
+                                <div class="activity-details">
+                                    <strong>@payment.School?.Name</strong> paid ৳@payment.Amount
+                                    <span class="activity-time">@payment.InitiatedAt.ToString("dd MMM yyyy HH:mm")</span>
+                                </div>
+                            </li>
+                        }
+                    }
+                    else
+                    {
+                        <li class="empty-state">No recent payments.</li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .activity-list { list-style: none; padding: 0; margin: 0; }
+    .activity-item { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid #eee; }
+    .activity-item:last-child { border-bottom: none; }
+    .activity-icon { font-size: 1.5rem; margin-right: 15px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: #f8f9fa; border-radius: 50%; }
+    .activity-details { display: flex; flex-direction: column; }
+    .activity-time { font-size: 0.8rem; color: var(--text-muted); }
+    .dashboard-layout { display: flex; gap: 20px; flex-wrap: wrap; }
+    .panel.half { flex: 1 1 calc(50% - 10px); min-width: 300px; }
+</style>

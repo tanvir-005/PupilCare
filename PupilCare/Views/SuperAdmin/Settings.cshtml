@@ -1,0 +1,110 @@
+@model PupilCare.Models.SystemSetting
+@{
+    ViewData["Title"] = "System Settings";
+}
+
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h2>@ViewData["Title"]</h2>
+    </div>
+
+    <partial name="_SuperAdminNav" />
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+    }
+
+    <div class="panel">
+        <form asp-action="Settings" method="post">
+            @Html.AntiForgeryToken()
+            <div class="panel-header">
+                <h5 class="panel-title">Core System Information</h5>
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+            <div class="panel-body">
+                <div class="form-grid">
+                    <div class="form-section">
+                        <h6 class="section-title">General Info</h6>
+                        <div class="form-group">
+                            <label asp-for="SystemName">System Name</label>
+                            <input asp-for="SystemName" class="form-control" placeholder="e.g. PupilCare" />
+                            <span asp-validation-for="SystemName" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="CertificationInfo">Certification Info</label>
+                            <input asp-for="CertificationInfo" class="form-control" placeholder="e.g. ISO 27001 Certified" />
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h6 class="section-title">Contact Information</h6>
+                        <div class="form-group">
+                            <label asp-for="ContactEmail">Support Email</label>
+                            <input asp-for="ContactEmail" class="form-control" />
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="ContactPhone">Contact Phone</label>
+                            <input asp-for="ContactPhone" class="form-control" />
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Address">Office Address</label>
+                            <textarea asp-for="Address" class="form-control" rows="2"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-section full-width">
+                        <h6 class="section-title">Content Pages</h6>
+                        <div class="form-row">
+                            <div class="form-group half">
+                                <label asp-for="AboutUs">About Us</label>
+                                <textarea asp-for="AboutUs" class="form-control" rows="5"></textarea>
+                            </div>
+                            <div class="form-group half">
+                                <label asp-for="Careers">Careers</label>
+                                <textarea asp-for="Careers" class="form-control" rows="5"></textarea>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group half">
+                                <label asp-for="Partners">Partners</label>
+                                <textarea asp-for="Partners" class="form-control" rows="5"></textarea>
+                            </div>
+                            <div class="form-group half">
+                                <label asp-for="PrivacyPolicy">Privacy Policy</label>
+                                <textarea asp-for="PrivacyPolicy" class="form-control" rows="5"></textarea>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="TermsAndConditions">Terms & Conditions</label>
+                            <textarea asp-for="TermsAndConditions" class="form-control" rows="5"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h6 class="section-title">Social Links</h6>
+                        <div class="form-group">
+                            <label asp-for="FacebookUrl">Facebook URL</label>
+                            <input asp-for="FacebookUrl" class="form-control" />
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="TwitterUrl">Twitter URL</label>
+                            <input asp-for="TwitterUrl" class="form-control" />
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="LinkedInUrl">LinkedIn URL</label>
+                            <input asp-for="LinkedInUrl" class="form-control" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="panel-footer text-right">
+                <small class="text-muted">Last Updated: @Model.LastUpdated.ToLocalTime().ToString("g")</small>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

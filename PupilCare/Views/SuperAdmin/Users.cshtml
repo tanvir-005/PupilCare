@@ -1,0 +1,73 @@
+@model IEnumerable<PupilCare.Models.ApplicationUser>
+@{
+    ViewData["Title"] = "User Management";
+    var userRoles = ViewBag.UserRoles as Dictionary<string, string>;
+}
+
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h2>@ViewData["Title"]</h2>
+    </div>
+
+    <partial name="_SuperAdminNav" />
+
+    <div class="panel">
+        <div class="panel-header">
+            <h5 class="panel-title">All System Users</h5>
+        </div>
+        <div class="panel-body">
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Roles</th>
+                            <th>School</th>
+                            <th>Status</th>
+                            <th class="text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var user in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="user-info">
+                                        <span class="user-name">@user.FullName</span>
+                                        <span class="user-email">@user.Email</span>
+                                    </div>
+                                </td>
+                                <td>@userRoles?[user.Id]</td>
+                                <td>@(user.SchoolId.HasValue ? "Assigned" : "N/A")</td>
+                                <td>
+                                    @if (user.IsActive)
+                                    {
+                                        <span class="status-badge status-approved">Active</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-badge status-pending">Inactive</span>
+                                    }
+                                </td>
+                                <td class="text-right">
+                                    <form asp-action="ToggleUserStatus" asp-route-id="@user.Id" method="post" style="display:inline;">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm @(user.IsActive ? "btn-danger" : "btn-primary")">
+                                            @(user.IsActive ? "Deactivate" : "Activate")
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .user-info { display: flex; flex-direction: column; }
+    .user-name { font-weight: 500; color: var(--text-dark); }
+    .user-email { font-size: 0.85rem; color: var(--text-muted); }
+</style>

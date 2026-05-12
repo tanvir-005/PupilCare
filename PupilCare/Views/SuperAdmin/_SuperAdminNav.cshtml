@@ -1,0 +1,24 @@
+@{
+    string activeTab = ViewData["ActiveTab"] as string ?? "";
+}
+
+<div class="sub-nav">
+    <a asp-action="Dashboard" class="sub-nav-link @(activeTab == "Schools" ? "active" : "")">
+        Schools
+    </a>
+    <a asp-action="SubscriptionPlans" class="sub-nav-link @(activeTab == "Plans" ? "active" : "")">
+        Plans
+    </a>
+    <a asp-action="Users" class="sub-nav-link @(activeTab == "Users" ? "active" : "")">
+        Users
+    </a>
+    <a asp-action="Messages" class="sub-nav-link @(activeTab == "Messages" ? "active" : "")">
+        Messages
+    </a>
+    <a asp-action="Settings" class="sub-nav-link @(activeTab == "Settings" ? "active" : "")">
+        Settings
+    </a>
+    <a asp-action="Logs" class="sub-nav-link @(activeTab == "Logs" ? "active" : "")">
+        Logs
+    </a>
+</div>

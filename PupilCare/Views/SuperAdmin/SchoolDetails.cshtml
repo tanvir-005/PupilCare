@@ -6,24 +6,30 @@
 }
 
 <div class="dashboard-container">
-    <div class="dashboard-header split-header">
-        <h2>@Model.Name</h2>
-        <div class="header-actions">
-            @if (!Model.IsApproved)
-            {
-                <form asp-action="ApproveSchool" asp-route-id="@Model.Id" method="post" style="display:inline;">
-                    <button type="submit" class="btn btn-success">Approve School</button>
-                </form>
-            }
-            else
-            {
-                <form asp-action="RejectSchool" asp-route-id="@Model.Id" method="post" style="display:inline;">
-                    <button type="submit" class="btn btn-warning">Revoke Approval</button>
-                </form>
-            }
-            <a asp-action="Dashboard" class="btn btn-secondary">Back to Dashboard</a>
+    <div class="dashboard-header">
+        <div class="split-header">
+            <h2>@Model.Name</h2>
+            <div class="header-actions">
+                @if (!Model.IsApproved)
+                {
+                    <form asp-action="ApproveSchool" asp-route-id="@Model.Id" method="post" style="display:inline;">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-success">Approve School</button>
+                    </form>
+                }
+                else
+                {
+                    <form asp-action="RejectSchool" asp-route-id="@Model.Id" method="post" style="display:inline;">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-warning">Revoke Approval</button>
+                    </form>
+                }
+                <a asp-action="Dashboard" class="btn btn-secondary">&larr; Back to Schools</a>
+            </div>
         </div>
     </div>
+
+    <partial name="_SuperAdminNav" />
 
     <div class="details-grid">
         <div class="panel">

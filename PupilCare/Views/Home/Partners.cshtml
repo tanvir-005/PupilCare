@@ -1,16 +1,29 @@
+@model PupilCare.Models.SystemSetting
 @{
-    ViewData["Title"] = "Partners";
+    ViewData["Title"] = "Our Partners";
 }
 
-<div class="card my-4">
-    <div class="card-header" style="background-color: var(--color-primary-lighter); padding: 1rem;">
-        <h2 style="margin: 0; color: var(--color-primary-dark);">Our Partners</h2>
+<div class="panel">
+    <div class="panel-header">
+        <h2 class="panel-title">@ViewData["Title"]</h2>
     </div>
-    <div class="card-body" style="padding: 1.5rem; border: 1px solid var(--color-border); border-top: none;">
-        <p>PupilCare works with world-class cloud providers and educational entities to guarantee 100% uptime and academic excellence.</p>
-        <ul>
-            <li><strong>Microsoft for Education</strong> - Empowering our cloud infrastructure</li>
-            <li><strong>Global EdTech Forum</strong> - Certified Partner</li>
-        </ul>
+    <div class="panel-body">
+        <div class="content-text">
+            @if (Model != null && !string.IsNullOrEmpty(Model.Partners))
+            {
+                <p>@Model.Partners</p>
+            }
+            else
+            {
+                <p>We work with leading schools, educational boards, and technology partners to provide a holistic ecosystem for student success.</p>
+                <div class="partners-grid mt-4">
+                    <p class="text-muted text-center">Collaborating with 50+ institutions across the country.</p>
+                </div>
+            }
+        </div>
     </div>
 </div>
+
+<style>
+    .content-text { font-size: 1.1rem; line-height: 1.8; color: var(--text-dark); white-space: pre-wrap; }
+</style>

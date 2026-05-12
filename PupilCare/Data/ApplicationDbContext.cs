@@ -29,6 +29,8 @@ namespace PupilCare.Data
         public DbSet<AiInsight> AiInsights { get; set; }
         public DbSet<SubscriptionPlan> SubscriptionPlans { get; set; }
         public DbSet<SubscriptionPayment> SubscriptionPayments { get; set; }
+        public DbSet<SystemSetting> SystemSettings { get; set; }
+        public DbSet<ContactMessage> ContactMessages { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

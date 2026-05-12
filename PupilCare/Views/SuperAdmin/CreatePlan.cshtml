@@ -4,9 +4,15 @@
 }
 
 <div class="dashboard-container">
+    <div class="dashboard-header">
+        <h2>@ViewData["Title"]</h2>
+    </div>
+
+    <partial name="_SuperAdminNav" />
+
     <div class="panel form-panel">
         <div class="panel-header">
-            <h4 class="panel-title">@ViewData["Title"]</h4>
+            <h5 class="panel-title">New Plan Details</h5>
         </div>
         <div class="panel-body">
             <form asp-action="CreatePlan" method="post">

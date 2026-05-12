@@ -1,0 +1,7 @@
+@model PupilCare.Models.SystemSetting
+<ul class="footer-list">
+    @if (!string.IsNullOrEmpty(Model.Address))
+    {
+        <li>@Model.Address</li>
+    }
+</ul>

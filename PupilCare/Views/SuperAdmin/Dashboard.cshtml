@@ -5,8 +5,10 @@
 
 <div class="dashboard-container">
     <div class="dashboard-header">
-        <h2>@ViewData["Title"]</h2>
+        <h2>Super Admin Overview</h2>
     </div>
+
+    <partial name="_SuperAdminNav" />
 
     <div class="dashboard-layout">
         <!-- Left Side: Summary Cards -->
@@ -41,10 +43,9 @@
         <div class="dashboard-main">
             <div class="panel">
                 <div class="panel-header">
-                    <h5 class="panel-title">All Schools</h5>
+                    <h5 class="panel-title">Registered Schools</h5>
                     <div class="panel-actions">
-                        <a asp-action="Dashboard" class="btn btn-secondary">Manage Schools</a>
-                        <a asp-action="SubscriptionPlans" class="btn btn-primary">Manage Plans</a>
+                        <span class="text-muted">Total: @(Model?.Count() ?? 0)</span>
                     </div>
                 </div>
                 <div class="panel-body">

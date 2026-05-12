@@ -6,10 +6,19 @@
 <div class="dashboard-container">
     <div class="dashboard-header split-header">
         <h2>@ViewData["Title"]</h2>
-        <a asp-action="CreatePlan" class="btn btn-primary">Create New Plan</a>
     </div>
 
-    <div class="plans-grid">
+    <partial name="_SuperAdminNav" />
+
+    <div class="panel">
+        <div class="panel-header">
+            <h5 class="panel-title">Available Plans</h5>
+            <div class="panel-actions">
+                <a asp-action="CreatePlan" class="btn btn-primary">Create New Plan</a>
+            </div>
+        </div>
+        <div class="panel-body">
+            <div class="plans-grid">
         @foreach (var plan in Model)
         {
             <div class="plan-card @(plan.IsActive ? "plan-active" : "plan-inactive")">
@@ -39,5 +48,7 @@
                 </div>
             </div>
         }
+            </div>
+        </div>
     </div>
 </div>

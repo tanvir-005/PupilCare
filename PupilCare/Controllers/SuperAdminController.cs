@@ -39,6 +39,7 @@ namespace PupilCare.Controllers
             ViewBag.PendingSchools = schools.Count(s => !s.IsApproved);
             ViewBag.ActiveSubscriptions = schools.Count(s => s.SubscriptionExpiry.HasValue && s.SubscriptionExpiry > DateTime.UtcNow);
 
+            ViewData["ActiveTab"] = "Schools";
             return View(schools);
         }
 
@@ -130,6 +131,7 @@ namespace PupilCare.Controllers
                 .Include(p => p.Payments)
                 .OrderBy(p => p.Price)
                 .ToListAsync();
+            ViewData["ActiveTab"] = "Plans";
             return View(plans);
         }
 
@@ -227,6 +229,158 @@ namespace PupilCare.Controllers
             await _context.SaveChangesAsync();
             TempData["SuccessMessage"] = $"Subscription extended for \"{school.Name}\" until {school.SubscriptionExpiry:dd MMM yyyy}.";
             return RedirectToAction(nameof(SchoolDetails), new { id = schoolId });
+        }
+
+        // ── System Settings ──────────────────────────────────────────────────
+        [HttpGet]
+        public async Task<IActionResult> Settings()
+        {
+            var settings = await _context.SystemSettings.FirstOrDefaultAsync();
+            if (settings == null)
+            {
+                settings = new SystemSetting();
+                _context.SystemSettings.Add(settings);
+                await _context.SaveChangesAsync();
+            }
+            ViewData["ActiveTab"] = "Settings";
+            return View(settings);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Settings(SystemSetting model)
+        {
+            if (!ModelState.IsValid) return View(model);
+
+            var settings = await _context.SystemSettings.FirstOrDefaultAsync();
+            if (settings == null) return NotFound();
+
+            settings.SystemName = model.SystemName;
+            settings.ContactEmail = model.ContactEmail;
+            settings.ContactPhone = model.ContactPhone;
+            settings.Address = model.Address;
+            settings.AboutUs = model.AboutUs;
+            settings.Careers = model.Careers;
+            settings.Partners = model.Partners;
+            settings.PrivacyPolicy = model.PrivacyPolicy;
+            settings.TermsAndConditions = model.TermsAndConditions;
+            settings.CertificationInfo = model.CertificationInfo;
+            settings.FacebookUrl = model.FacebookUrl;
+            settings.TwitterUrl = model.TwitterUrl;
+            settings.LinkedInUrl = model.LinkedInUrl;
+            settings.LastUpdated = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+            TempData["SuccessMessage"] = "System settings updated successfully.";
+            return RedirectToAction(nameof(Settings));
+        }
+
+        // ── Contact Messages ─────────────────────────────────────────────────
+        public async Task<IActionResult> Messages()
+        {
+            var messages = await _context.ContactMessages
+                .OrderByDescending(m => m.SentAt)
+                .ToListAsync();
+            ViewData["ActiveTab"] = "Messages";
+            return View(messages);
+        }
+
+        public async Task<IActionResult> MessageDetails(int id)
+        {
+            var message = await _context.ContactMessages.FindAsync(id);
+            if (message == null) return NotFound();
+
+            if (!message.IsRead)
+            {
+                message.IsRead = true;
+                await _context.SaveChangesAsync();
+            }
+
+            return View(message);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ReplyMessage(int id, string reply)
+        {
+            var message = await _context.ContactMessages.FindAsync(id);
+            if (message == null) return NotFound();
+
+            message.ReplyMessage = reply;
+            message.RepliedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Reply saved.";
+            return RedirectToAction(nameof(MessageDetails), new { id = id });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteMessage(int id)
+        {
+            var message = await _context.ContactMessages.FindAsync(id);
+            if (message != null)
+            {
+                _context.ContactMessages.Remove(message);
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Message deleted.";
+            }
+            return RedirectToAction(nameof(Messages));
+        }
+
+        // ── User Management ──────────────────────────────────────────────────
+        public async Task<IActionResult> Users()
+        {
+            var users = await _userManager.Users
+                .OrderBy(u => u.Email)
+                .ToListAsync();
+
+            var userRoles = new System.Collections.Generic.Dictionary<string, string>();
+            foreach (var user in users)
+            {
+                var roles = await _userManager.GetRolesAsync(user);
+                userRoles[user.Id] = string.Join(", ", roles);
+            }
+
+            ViewBag.UserRoles = userRoles;
+            ViewData["ActiveTab"] = "Users";
+            return View(users);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ToggleUserStatus(string id)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            if (user != null)
+            {
+                user.IsActive = !user.IsActive;
+                await _userManager.UpdateAsync(user);
+                TempData["SuccessMessage"] = $"User {user.Email} is now {(user.IsActive ? "Active" : "Inactive")}.";
+            }
+            return RedirectToAction(nameof(Users));
+        }
+
+        // ── System Logs ──────────────────────────────────────────────────────
+        public async Task<IActionResult> Logs()
+        {
+            // Fetching recent critical data as a form of "logs"
+            var recentPayments = await _context.SubscriptionPayments
+                .Include(p => p.School)
+                .OrderByDescending(p => p.InitiatedAt)
+                .Take(10)
+                .ToListAsync();
+
+            var recentSchools = await _context.Schools
+                .OrderByDescending(s => s.Id)
+                .Take(10)
+                .ToListAsync();
+
+            ViewBag.RecentPayments = recentPayments;
+            ViewBag.RecentSchools = recentSchools;
+
+            ViewData["ActiveTab"] = "Logs";
+            return View();
         }
     }
 }

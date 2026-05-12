@@ -1,0 +1,83 @@
+@model IEnumerable<PupilCare.Models.ContactMessage>
+@{
+    ViewData["Title"] = "Contact Messages";
+}
+
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h2>@ViewData["Title"]</h2>
+    </div>
+
+    <partial name="_SuperAdminNav" />
+
+    <div class="panel">
+        <div class="panel-header">
+            <h5 class="panel-title">User Inquiries</h5>
+        </div>
+        <div class="panel-body">
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Sender</th>
+                            <th>Subject</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th class="text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            foreach (var msg in Model)
+                            {
+                                <tr class="@(msg.IsRead ? "" : "unread-row") clickable-row" onclick="window.location.href='@Url.Action("MessageDetails", new { id = msg.Id })'">
+                                    <td>
+                                        <div class="sender-info">
+                                            <span class="sender-name">@msg.Name</span>
+                                            <span class="sender-email">@msg.Email</span>
+                                        </div>
+                                    </td>
+                                    <td>@msg.Subject</td>
+                                    <td>@msg.SentAt.ToLocalTime().ToString("dd MMM yyyy HH:mm")</td>
+                                    <td>
+                                        @if (msg.IsRead)
+                                        {
+                                            <span class="status-badge status-approved">Read</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="status-badge status-pending">New</span>
+                                        }
+                                    </td>
+                                    <td class="text-right">
+                                        <div class="action-buttons">
+                                            <a asp-action="MessageDetails" asp-route-id="@msg.Id" class="btn btn-sm btn-secondary" onclick="event.stopPropagation();">View</a>
+                                            <form asp-action="DeleteMessage" asp-route-id="@msg.Id" method="post" style="display:inline;" onsubmit="return confirm('Delete this message?');" onclick="event.stopPropagation();">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="5" class="empty-state">No messages yet.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .unread-row { font-weight: 600; background-color: rgba(var(--primary-rgb), 0.05); }
+    .sender-info { display: flex; flex-direction: column; }
+    .sender-name { color: var(--text-dark); }
+    .sender-email { font-size: 0.8rem; color: var(--text-muted); }
+</style>
