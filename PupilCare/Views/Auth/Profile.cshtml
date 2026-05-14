@@ -1,0 +1,75 @@
+@model PupilCare.ViewModels.ProfileViewModel
+
+@{
+    ViewData["Title"] = "My Profile";
+}
+
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h2>Account Settings</h2>
+    </div>
+
+    <div class="details-grid">
+        <!-- Profile Info -->
+        <div class="panel form-panel">
+            <div class="panel-header">
+                <h3 class="panel-title">Personal Information</h3>
+            </div>
+            <div class="panel-body">
+                <form method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    
+                    <div class="form-group">
+                        <label asp-for="Email">Email Address (Read-only)</label>
+                        <input asp-for="Email" class="form-control" readonly style="background-color: var(--color-primary-lighter); opacity: 0.7;" />
+                    </div>
+                    
+                    <div class="form-group">
+                        <label asp-for="FullName">Full Name</label>
+                        <input asp-for="FullName" class="form-control" />
+                        <span asp-validation-for="FullName" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label asp-for="Designation"></label>
+                        <input asp-for="Designation" class="form-control" />
+                        <span asp-validation-for="Designation" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label asp-for="Phone"></label>
+                        <input asp-for="Phone" class="form-control" />
+                        <span asp-validation-for="Phone" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Account Security -->
+        <div class="panel">
+            <div class="panel-header">
+                <h3 class="panel-title">Security</h3>
+            </div>
+            <div class="panel-body">
+                <p>Manage your account password and security settings.</p>
+                <div class="mt-4">
+                    <a asp-action="ChangePassword" class="btn btn-secondary">Change Password</a>
+                </div>
+                
+                <div class="mt-4 pt-4" style="border-top: 1px solid var(--color-border);">
+                    <p class="text-muted" style="font-size: 0.9rem;">
+                        Last session activity: @DateTime.Now.ToShortDateString()
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -7,9 +7,9 @@
 {
     var user = await UserManager.GetUserAsync(User);
     <li class="nav-item d-flex" style="display:flex; align-items:center; gap: 0.8rem;">
-        <span class="nav-link text-dark" style="color: var(--color-text-muted); font-size: 0.9rem;">
+        <a class="nav-link text-dark" style="color: var(--color-primary-dark); font-weight: 600;" asp-controller="Auth" asp-action="Profile">
             Hello, @(user?.FullName ?? User.Identity?.Name)!
-        </span>
+        </a>
         @if (User.IsInRole("SuperAdmin"))
         {
             <a class="btn btn-info btn-sm" asp-controller="SuperAdmin" asp-action="Dashboard">Dashboard</a>

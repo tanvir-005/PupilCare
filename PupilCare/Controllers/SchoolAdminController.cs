@@ -228,6 +228,31 @@ namespace PupilCare.Controllers
             return RedirectToAction(nameof(Teachers));
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResetTeacherPassword(string teacherId, string newPassword)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user?.SchoolId == null) return Unauthorized();
+
+            var teacher = await _userManager.FindByIdAsync(teacherId);
+            if (teacher == null || teacher.SchoolId != user.SchoolId) return NotFound();
+
+            var token = await _userManager.GeneratePasswordResetTokenAsync(teacher);
+            var result = await _userManager.ResetPasswordAsync(teacher, token, newPassword);
+
+            if (result.Succeeded)
+            {
+                TempData["SuccessMessage"] = $"Password for {teacher.FullName} has been reset.";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = string.Join(" ", result.Errors.Select(e => e.Description));
+            }
+
+            return RedirectToAction(nameof(Teachers));
+        }
+
         public async Task<IActionResult> Students(int? classLevelId, int? sectionId)
         {
             var user = await _userManager.GetUserAsync(User);

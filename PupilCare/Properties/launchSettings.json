@@ -1,4 +1,4 @@
-﻿{
+{
   "$schema": "https://json.schemastore.org/launchsettings.json",
   "profiles": {
     "http": {
@@ -7,7 +7,13 @@
       "launchBrowser": true,
       "applicationUrl": "http://localhost:5124",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "SmtpSettings__Server": "smtp.gmail.com",
+        "SmtpSettings__Port": "587",
+        "SmtpSettings__SenderName": "PupilCare Support",
+        "SmtpSettings__SenderEmail": "ceo.pupilcare@gmail.com",
+        "SmtpSettings__Username": "ceo.pupilcare@gmail.com",
+        "SmtpSettings__Password": "qztxqdsvmkwsqqle"
       }
     },
     "https": {
@@ -16,7 +22,13 @@
       "launchBrowser": true,
       "applicationUrl": "https://localhost:7113;http://localhost:5124",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "SmtpSettings__Server": "smtp.gmail.com",
+        "SmtpSettings__Port": "587",
+        "SmtpSettings__SenderName": "PupilCare Support",
+        "SmtpSettings__SenderEmail": "ceo.pupilcare@gmail.com",
+        "SmtpSettings__Username": "ceo.pupilcare@gmail.com",
+        "SmtpSettings__Password": "qztxqdsvmkwsqqle"
       }
     }
   }

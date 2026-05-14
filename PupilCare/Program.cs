@@ -36,6 +36,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 // ── Application Services ──────────────────────────────────────────────────────
 builder.Services.AddScoped<IAiInsightService, GeminiInsightService>();
 builder.Services.AddScoped<IPaymentService, SslCommerzPaymentService>();
+builder.Services.AddScoped<IEmailSender, EmailSender>();
 builder.Services.AddHttpClient();
 
 builder.Services.AddControllersWithViews();
