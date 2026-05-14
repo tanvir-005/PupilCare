@@ -36,12 +36,15 @@ namespace PupilCare.Services
             // client.ServerCertificateValidationCallback = (s, c, h, e) => true;
 
             await client.ConnectAsync(
-                smtpSettings["Server"], 
+                smtpSettings["Server"] ?? "smtp.gmail.com", 
                 int.Parse(smtpSettings["Port"] ?? "587"), 
                 SecureSocketOptions.StartTls
             );
 
-            await client.AuthenticateAsync(smtpSettings["Username"], smtpSettings["Password"]);
+            await client.AuthenticateAsync(
+                smtpSettings["Username"] ?? string.Empty, 
+                smtpSettings["Password"] ?? string.Empty
+            );
             await client.SendAsync(message);
             await client.DisconnectAsync(true);
         }
