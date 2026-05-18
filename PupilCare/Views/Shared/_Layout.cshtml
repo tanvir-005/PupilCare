@@ -30,6 +30,18 @@
 
     <main role="main" class="main-content">
         <div class="container">
+            @if (User.Identity?.IsAuthenticated == true && 
+                ViewContext.RouteData.Values["controller"]?.ToString() != "Home" &&
+                ViewContext.RouteData.Values["action"]?.ToString() != "Dashboard" &&
+                ViewContext.RouteData.Values["controller"]?.ToString() != "Auth")
+            {
+                var dashboardController = User.IsInRole("SuperAdmin") ? "SuperAdmin" : User.IsInRole("SchoolAdmin") ? "SchoolAdmin" : "Teacher";
+                <div class="mb-3">
+                    <a asp-controller="@dashboardController" asp-action="Dashboard" class="btn btn-outline-secondary btn-sm">
+                        &larr; Back to Dashboard
+                    </a>
+                </div>
+            }
             @if (TempData["SuccessMessage"] != null)
             {
                 <div class="alert alert-success">

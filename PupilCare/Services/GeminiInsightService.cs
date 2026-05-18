@@ -30,7 +30,7 @@ namespace PupilCare.Services
         }
 
         public async Task<string> GenerateInsightAsync(
-            string insightScope, string scopeLabel, object structuredData)
+            string insightScope, string scopeLabel, object structuredData, string? customPrompt = null)
         {
             try
             {
@@ -49,13 +49,13 @@ namespace PupilCare.Services
 
                 var dataJson = JsonSerializer.Serialize(structuredData, new JsonSerializerOptions { WriteIndented = true });
 
-                var prompt = $"""
+                var promptTemplate = string.IsNullOrWhiteSpace(customPrompt) ? """
 You are an educational analyst for PupilCare, a school management system in Bangladesh.
-You have been given structured data about: {scopeLabel}
-Insight Scope: {insightScope}
+You have been given structured data about: {ScopeLabel}
+Insight Scope: {InsightScope}
 
 Data:
-{dataJson}
+{Data}
 
 Please provide a comprehensive analysis with the following sections:
 1. **Overall Summary** - Key statistics and general performance overview
@@ -64,7 +64,12 @@ Please provide a comprehensive analysis with the following sections:
 4. **Actionable Recommendations** - Specific steps teachers or admin should take
 
 Be empathetic, professional, and constructive. Keep the response focused and practical.
-""";
+""" : customPrompt;
+
+                var prompt = promptTemplate
+                    .Replace("{ScopeLabel}", scopeLabel)
+                    .Replace("{InsightScope}", insightScope)
+                    .Replace("{Data}", dataJson);
 
                 var requestBody = new
                 {

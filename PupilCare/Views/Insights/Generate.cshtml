@@ -88,15 +88,15 @@
 
                 <section class="insight-step is-hidden" data-step="subject">
                     <div class="form-group">
-                        <label asp-for="SubjectId">Subject</label>
-                        <select asp-for="SubjectId" class="form-control" id="SubjectId">
-                            <option value="">Choose a subject</option>
+                        <label asp-for="SubjectIds">Subject(s)</label>
+                        <select asp-for="SubjectIds" class="form-control" id="SubjectIds" multiple="multiple" style="min-height: 100px;">
                             @foreach (var item in ViewBag.SubjectOptions)
                             {
                                 <option value="@item.Id" data-class-id="@item.ClassLevelId">@item.Label</option>
                             }
                         </select>
-                        <span asp-validation-for="SubjectId" class="text-danger"></span>
+                        <small class="form-text text-muted">Hold Ctrl (or Cmd) to select multiple</small>
+                        <span asp-validation-for="SubjectIds" class="text-danger"></span>
                     </div>
                     <div>
                         <h3>Whole subject in this section?</h3>
@@ -116,20 +116,26 @@
 
                 <section class="insight-step is-hidden" data-step="student">
                     <div class="form-group">
-                        <label asp-for="StudentId">Student</label>
-                        <select asp-for="StudentId" class="form-control" id="StudentId">
-                            <option value="">Choose a student</option>
+                        <label asp-for="StudentIds">Student(s)</label>
+                        <select asp-for="StudentIds" class="form-control" id="StudentIds" multiple="multiple" style="min-height: 150px;">
                             @foreach (var item in ViewBag.StudentOptions)
                             {
                                 <option value="@item.Id" data-section-id="@item.ClassSectionId">@item.Label</option>
                             }
                         </select>
-                        <span asp-validation-for="StudentId" class="text-danger"></span>
+                        <small class="form-text text-muted">Hold Ctrl (or Cmd) to select multiple</small>
+                        <span asp-validation-for="StudentIds" class="text-danger"></span>
                     </div>
                 </section>
             </div>
 
-            <div class="insight-summary" id="insightSummary"></div>
+            <div class="form-group mt-4">
+                <label asp-for="CustomPrompt">Custom Prompt Template (Optional)</label>
+                <textarea asp-for="CustomPrompt" class="form-control" rows="8"></textarea>
+                <small class="form-text text-muted">Use {ScopeLabel}, {InsightScope}, and {Data} placeholders.</small>
+            </div>
+
+            <div class="insight-summary mt-3" id="insightSummary"></div>
 
             <div class="form-actions">
                 <a asp-action="Index" class="btn btn-secondary">Cancel</a>
@@ -146,8 +152,8 @@
             const scopeInput = document.getElementById("InsightScope");
             const classSelect = document.getElementById("ClassLevelId");
             const sectionSelect = document.getElementById("ClassSectionId");
-            const subjectSelect = document.getElementById("SubjectId");
-            const studentSelect = document.getElementById("StudentId");
+            const subjectSelect = document.getElementById("SubjectIds");
+            const studentSelect = document.getElementById("StudentIds");
             const generateButton = document.getElementById("generateButton");
             const summary = document.getElementById("insightSummary");
 
@@ -192,13 +198,17 @@
                 return select.options[select.selectedIndex]?.text || "";
             }
 
+            function selectedValues(select) {
+                return Array.from(select.selectedOptions).map(o => o.value);
+            }
+
             function update() {
                 const schoolNo = checked("schoolChoice") === "no";
                 const hasClass = schoolNo && classSelect.value;
                 const classNo = checked("classChoice") === "no";
                 const hasSection = hasClass && classNo && sectionSelect.value;
                 const sectionNo = checked("sectionChoice") === "no";
-                const hasSubject = hasSection && sectionNo && subjectSelect.value;
+                const hasSubject = hasSection && sectionNo && selectedValues(subjectSelect).length > 0;
                 const subjectNo = checked("subjectChoice") === "no";
 
                 show("class", schoolNo);
@@ -229,10 +239,10 @@
                     label = selectedText(sectionSelect);
                 } else if (hasSubject && checked("subjectChoice") === "yes") {
                     scope = "SectionSubject";
-                    label = `${selectedText(sectionSelect)} - ${selectedText(subjectSelect).split(" - ").pop()}`;
-                } else if (hasSubject && subjectNo && studentSelect.value) {
+                    label = `${selectedText(sectionSelect)} - ${selectedValues(subjectSelect).length} subjects`;
+                } else if (hasSubject && subjectNo && selectedValues(studentSelect).length > 0) {
                     scope = "Student";
-                    label = `${selectedText(studentSelect)} - ${selectedText(subjectSelect).split(" - ").pop()}`;
+                    label = `${selectedValues(studentSelect).length} students - ${selectedValues(subjectSelect).length} subjects`;
                 }
 
                 scopeInput.value = scope;

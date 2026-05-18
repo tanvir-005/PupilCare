@@ -46,7 +46,11 @@ namespace PupilCare.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user?.SchoolId == null) return Unauthorized();
             await LoadSelectsAsync(user.SchoolId.Value);
-            return View(new GenerateInsightViewModel());
+
+            var setting = await _context.Set<SystemSetting>().FirstOrDefaultAsync();
+            var defaultPrompt = setting?.DefaultAiPrompt ?? "You are an educational analyst for PupilCare, a school management system in Bangladesh.\nYou have been given structured data about: {ScopeLabel}\nInsight Scope: {InsightScope}\n\nData:\n{Data}\n\nPlease provide a comprehensive analysis with the following sections:\n1. **Overall Summary** - Key statistics and general performance overview\n2. **Strengths** - Notable positives observed in the data\n3. **Areas of Concern** - Issues that need attention (poor attendance, low marks, behavioral patterns)\n4. **Actionable Recommendations** - Specific steps teachers or admin should take\n\nBe empathetic, professional, and constructive. Keep the response focused and practical.";
+
+            return View(new GenerateInsightViewModel { CustomPrompt = defaultPrompt });
         }
 
         [HttpPost]
@@ -66,7 +70,7 @@ namespace PupilCare.Controllers
             if (!await CanGenerateAsync(user, model)) return Forbid();
 
             var (label, data) = await BuildInsightDataAsync(user.SchoolId.Value, model);
-            var text = await _insightService.GenerateInsightAsync(model.InsightScope, label, data);
+            var text = await _insightService.GenerateInsightAsync(model.InsightScope, label, data, model.CustomPrompt);
 
             var insight = new AiInsight
             {
@@ -75,10 +79,10 @@ namespace PupilCare.Controllers
                 GeneratedText = text,
                 GeneratedByUserId = user.Id,
                 SchoolId = user.SchoolId.Value,
-                StudentId = model.StudentId,
+                StudentId = model.StudentIds.Count == 1 ? model.StudentIds[0] : null,
                 ClassLevelId = model.ClassLevelId,
                 ClassSectionId = model.ClassSectionId,
-                SubjectId = model.SubjectId
+                SubjectId = model.SubjectIds.Count == 1 ? model.SubjectIds[0] : null
             };
 
             _context.AiInsights.Add(insight);
@@ -133,23 +137,23 @@ namespace PupilCare.Controllers
             {
                 model.ClassLevelId = null;
                 model.ClassSectionId = null;
-                model.SubjectId = null;
-                model.StudentId = null;
+                model.SubjectIds.Clear();
+                model.StudentIds.Clear();
             }
             else if (model.InsightScope == "Class")
             {
                 model.ClassSectionId = null;
-                model.SubjectId = null;
-                model.StudentId = null;
+                model.SubjectIds.Clear();
+                model.StudentIds.Clear();
             }
             else if (model.InsightScope == "Section")
             {
-                model.SubjectId = null;
-                model.StudentId = null;
+                // School admin can select specific subjects and students while in Section scope.
+                // We don't clear them here anymore.
             }
             else if (model.InsightScope == "SectionSubject")
             {
-                model.StudentId = null;
+                model.StudentIds.Clear();
             }
         }
 
@@ -195,55 +199,45 @@ namespace PupilCare.Controllers
 
             if (model.InsightScope == "Section") return;
 
-            if (!model.SubjectId.HasValue)
+            if (model.SubjectIds.Count == 0)
             {
-                ModelState.AddModelError(nameof(model.SubjectId), "Choose a subject.");
+                ModelState.AddModelError(nameof(model.SubjectIds), "Choose at least one subject.");
                 return;
             }
 
             var subjectExists = await _context.Subjects
-                .AnyAsync(s => s.Id == model.SubjectId && s.ClassLevelId == model.ClassLevelId);
+                .AnyAsync(s => model.SubjectIds.Contains(s.Id) && s.ClassLevelId == model.ClassLevelId);
             if (!subjectExists)
             {
-                ModelState.AddModelError(nameof(model.SubjectId), "Choose a valid subject for the selected class.");
+                ModelState.AddModelError(nameof(model.SubjectIds), "Choose a valid subject for the selected class.");
                 return;
             }
 
             if (model.InsightScope == "SectionSubject") return;
 
-            if (!model.StudentId.HasValue)
+            if (model.StudentIds.Count == 0)
             {
-                ModelState.AddModelError(nameof(model.StudentId), "Choose a student.");
+                ModelState.AddModelError(nameof(model.StudentIds), "Choose at least one student.");
                 return;
             }
 
             var studentExists = await _context.Students
-                .AnyAsync(s => s.Id == model.StudentId && s.ClassSectionId == model.ClassSectionId);
+                .AnyAsync(s => model.StudentIds.Contains(s.Id) && s.ClassSectionId == model.ClassSectionId);
             if (!studentExists)
             {
-                ModelState.AddModelError(nameof(model.StudentId), "Choose a valid student for the selected section.");
+                ModelState.AddModelError(nameof(model.StudentIds), "Choose a valid student for the selected section.");
             }
         }
 
         private async Task<bool> CanGenerateAsync(ApplicationUser user, GenerateInsightViewModel model)
         {
             if (await _userManager.IsInRoleAsync(user, "SchoolAdmin")) return true;
-            if (model.InsightScope == "School" || model.InsightScope == "Class" || model.InsightScope == "Section") return false;
+            if (model.InsightScope == "School") return false;
 
-            if (model.StudentId.HasValue)
+            if (model.ClassLevelId.HasValue)
             {
-                var student = await _context.Students.Include(s => s.ClassSection).ThenInclude(s => s.ClassLevel)
-                    .FirstOrDefaultAsync(s => s.Id == model.StudentId && s.ClassSection.ClassLevel.SchoolId == user.SchoolId);
-                if (student == null) return false;
-                if (student.ClassSection.ClassLevel.ClassTeacherId == user.Id) return true;
-                return await _context.TeacherAssignments.AnyAsync(a => a.TeacherId == user.Id && a.ClassSectionId == student.ClassSectionId);
-            }
-
-            if (model.ClassSectionId.HasValue && model.SubjectId.HasValue)
-                return await _context.TeacherAssignments.AnyAsync(a => a.TeacherId == user.Id && a.ClassSectionId == model.ClassSectionId && a.SubjectId == model.SubjectId);
-
-            if (model.ClassLevelId.HasValue && model.SubjectId.HasValue)
                 return await _context.ClassLevels.AnyAsync(c => c.Id == model.ClassLevelId && c.ClassTeacherId == user.Id);
+            }
 
             return false;
         }
@@ -261,9 +255,9 @@ namespace PupilCare.Controllers
 
             if (model.ClassLevelId.HasValue) studentsQuery = studentsQuery.Where(s => s.ClassSection.ClassLevelId == model.ClassLevelId);
             if (model.ClassSectionId.HasValue) studentsQuery = studentsQuery.Where(s => s.ClassSectionId == model.ClassSectionId);
-            if (model.StudentId.HasValue) studentsQuery = studentsQuery.Where(s => s.Id == model.StudentId);
+            if (model.StudentIds.Count > 0) studentsQuery = studentsQuery.Where(s => model.StudentIds.Contains(s.Id));
 
-            var subject = model.SubjectId.HasValue ? await _context.Subjects.FindAsync(model.SubjectId.Value) : null;
+            var subject = model.SubjectIds.Count == 1 ? await _context.Subjects.FindAsync(model.SubjectIds[0]) : null;
             var list = await studentsQuery.OrderBy(s => s.ClassSection.ClassLevel.Order).ThenBy(s => s.ClassSection.Name).ThenBy(s => s.StudentId).ToListAsync();
 
             var label = model.InsightScope;
@@ -271,7 +265,9 @@ namespace PupilCare.Controllers
             else if (model.ClassSectionId.HasValue)
             {
                 var section = await _context.ClassSections.Include(s => s.ClassLevel).FirstAsync(s => s.Id == model.ClassSectionId);
-                label = $"{section.ClassLevel.Name} - Section {section.Name}" + (subject == null ? "" : $" - {subject.Name}");
+                label = $"{section.ClassLevel.Name} - Section {section.Name}";
+                if (model.SubjectIds.Count > 0) label += $" - ({model.SubjectIds.Count} subjects)";
+                if (model.StudentIds.Count > 0) label += $" - ({model.StudentIds.Count} students)";
             }
             else if (model.ClassLevelId.HasValue)
             {
@@ -283,7 +279,7 @@ namespace PupilCare.Controllers
             var studentRecords = list.Select(s =>
             {
                 var marks = s.ExamMarks
-                    .Where(m => subject == null || m.SubjectId == subject.Id)
+                    .Where(m => model.SubjectIds.Count == 0 || model.SubjectIds.Contains(m.SubjectId))
                     .OrderBy(m => m.Exam.Name)
                     .ThenBy(m => m.Subject.Name)
                     .Select(m => new
@@ -299,7 +295,7 @@ namespace PupilCare.Controllers
                     });
 
                 var attendanceRecords = s.AttendanceRecords
-                    .Where(a => subject == null || a.SubjectId == subject.Id)
+                    .Where(a => model.SubjectIds.Count == 0 || model.SubjectIds.Contains(a.SubjectId))
                     .OrderByDescending(a => a.Date)
                     .Select(a => new
                     {
@@ -310,7 +306,7 @@ namespace PupilCare.Controllers
                     });
 
                 var comments = s.Comments
-                    .Where(c => subject == null || c.SubjectId == null || c.SubjectId == subject.Id)
+                    .Where(c => model.SubjectIds.Count == 0 || c.SubjectId == null || model.SubjectIds.Contains(c.SubjectId.Value))
                     .OrderByDescending(c => c.CreatedAt)
                     .Select(c => new
                     {
@@ -337,7 +333,7 @@ namespace PupilCare.Controllers
                     },
                     AcademicRecords = marks,
                     AttendanceSummary = s.AttendanceRecords
-                        .Where(a => subject == null || a.SubjectId == subject.Id)
+                        .Where(a => model.SubjectIds.Count == 0 || model.SubjectIds.Contains(a.SubjectId))
                         .GroupBy(a => a.Subject.Name)
                         .Select(g => new
                         {
@@ -352,8 +348,8 @@ namespace PupilCare.Controllers
                 };
             }).ToList();
 
-            var allMarks = list.SelectMany(s => s.ExamMarks.Where(m => subject == null || m.SubjectId == subject.Id)).ToList();
-            var allAttendance = list.SelectMany(s => s.AttendanceRecords.Where(a => subject == null || a.SubjectId == subject.Id)).ToList();
+            var allMarks = list.SelectMany(s => s.ExamMarks.Where(m => model.SubjectIds.Count == 0 || model.SubjectIds.Contains(m.SubjectId))).ToList();
+            var allAttendance = list.SelectMany(s => s.AttendanceRecords.Where(a => model.SubjectIds.Count == 0 || model.SubjectIds.Contains(a.SubjectId))).ToList();
             var data = new
             {
                 Request = new
@@ -365,9 +361,9 @@ namespace PupilCare.Controllers
                         SchoolId = schoolId,
                         model.ClassLevelId,
                         model.ClassSectionId,
-                        model.SubjectId,
+                        model.SubjectIds,
                         Subject = subject?.Name,
-                        model.StudentId
+                        model.StudentIds
                     }
                 },
                 Summary = new
@@ -375,7 +371,7 @@ namespace PupilCare.Controllers
                     StudentCount = list.Count,
                     MarkRecordCount = allMarks.Count,
                     AttendanceRecordCount = allAttendance.Count,
-                    CommentCount = list.Sum(s => s.Comments.Count(c => subject == null || c.SubjectId == null || c.SubjectId == subject.Id)),
+                    CommentCount = list.Sum(s => s.Comments.Count(c => model.SubjectIds.Count == 0 || c.SubjectId == null || model.SubjectIds.Contains(c.SubjectId.Value))),
                     AverageMarkPercentage = allMarks.Any(m => m.MarksObtained.HasValue && m.Exam.FullMark > 0)
                         ? Math.Round(allMarks.Where(m => m.MarksObtained.HasValue && m.Exam.FullMark > 0).Average(m => (double)(m.MarksObtained!.Value / m.Exam.FullMark * 100)), 2)
                         : (double?)null,

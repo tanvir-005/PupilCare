@@ -52,6 +52,7 @@ namespace PupilCare.Controllers
             ViewBag.School = school;
             ViewBag.Teachers = await GetSchoolTeachersAsync(user.SchoolId.Value);
             ViewBag.Students = school.ClassLevels.SelectMany(c => c.Sections).SelectMany(s => s.Students).Count();
+            ViewBag.Exams = await _context.Exams.CountAsync(e => e.SchoolId == user.SchoolId);
             return View(school);
         }
 

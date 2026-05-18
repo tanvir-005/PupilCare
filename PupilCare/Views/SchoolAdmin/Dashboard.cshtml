@@ -3,8 +3,8 @@
     ViewData["Title"] = "School Admin Dashboard";
 }
 
-<div class="dashboard-container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+<div class="dashboard-container">
+    <div class="dashboard-header split-header">
         <h2>Dashboard - @Model.Name</h2>
         <div>
             @if (Model.SubscriptionExpiry.HasValue)
@@ -12,66 +12,69 @@
                 var daysLeft = (Model.SubscriptionExpiry.Value - DateTime.UtcNow).Days;
                 if (daysLeft > 0)
                 {
-                    <span class="badge bg-success p-2">Subscription Active (@daysLeft days left)</span>
+                    <span class="status-badge status-approved">Subscription Active (@daysLeft days left)</span>
                 }
                 else
                 {
-                    <span class="badge bg-danger p-2">Subscription Expired</span>
+                    <span class="status-badge status-rejected">Subscription Expired</span>
                 }
             }
             else
             {
-                <span class="badge bg-secondary p-2">No Subscription</span>
+                <span class="status-badge status-pending">No Subscription</span>
             }
-            <a asp-action="Subscription" class="btn btn-sm btn-outline-primary ms-2">Manage</a>
         </div>
     </div>
 
-    <div class="row">
-        <div class="col-md-3 mb-4">
-            <div class="card stat-card shadow-sm border-0 text-center">
-                <div class="card-body">
-                    <h5 class="text-muted">Total Classes</h5>
-                    <h2 class="fw-bold text-primary">@Model.ClassLevels.Count</h2>
-                    <a asp-action="Classes" class="stretched-link text-decoration-none">View Details</a>
-                </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
+        <div class="stat-card text-center" style="padding: 0; display: flex; flex-direction: column;">
+            <div class="card-body" style="padding: 1.5rem; flex: 1;">
+                <h5 class="text-muted" style="margin-bottom: 0.5rem;">Total Classes</h5>
+                <h2 class="fw-bold text-primary" style="margin-bottom: 0;">@Model.ClassLevels.Count</h2>
             </div>
+            <a asp-action="Classes" class="stat-bottom-btn text-decoration-none">Manage Classes</a>
         </div>
-        <div class="col-md-3 mb-4">
-            <div class="card stat-card shadow-sm border-0 text-center">
-                <div class="card-body">
-                    <h5 class="text-muted">Students</h5>
-                    <h2 class="fw-bold text-success">@ViewBag.Students</h2>
-                    <a asp-action="Students" class="stretched-link text-decoration-none">Manage Students</a>
-                </div>
+        <div class="stat-card text-center" style="padding: 0; display: flex; flex-direction: column;">
+            <div class="card-body" style="padding: 1.5rem; flex: 1;">
+                <h5 class="text-muted" style="margin-bottom: 0.5rem;">Students</h5>
+                <h2 class="fw-bold text-success" style="margin-bottom: 0;">@ViewBag.Students</h2>
             </div>
+            <a asp-action="Students" class="stat-bottom-btn text-decoration-none">Manage Students</a>
         </div>
-        <div class="col-md-3 mb-4">
-            <div class="card stat-card shadow-sm border-0 text-center">
-                <div class="card-body">
-                    <h5 class="text-muted">Teachers</h5>
-                    <h2 class="fw-bold text-success">@ViewBag.Teachers?.Count</h2>
-                    <a asp-action="Teachers" class="stretched-link text-decoration-none">Manage Teachers</a>
-                </div>
+        <div class="stat-card text-center" style="padding: 0; display: flex; flex-direction: column;">
+            <div class="card-body" style="padding: 1.5rem; flex: 1;">
+                <h5 class="text-muted" style="margin-bottom: 0.5rem;">Teachers</h5>
+                <h2 class="fw-bold text-success" style="margin-bottom: 0;">@ViewBag.Teachers?.Count</h2>
             </div>
+            <a asp-action="Teachers" class="stat-bottom-btn text-decoration-none">Manage Teachers</a>
         </div>
-        <div class="col-md-3 mb-4">
-            <div class="card stat-card shadow-sm border-0 text-center">
-                <div class="card-body">
-                    <h5 class="text-muted">Exams</h5>
-                    <h2 class="fw-bold text-primary">+</h2>
-                    <a asp-action="Exams" class="stretched-link text-decoration-none">Manage Exams</a>
-                </div>
+        <div class="stat-card text-center" style="padding: 0; display: flex; flex-direction: column;">
+            <div class="card-body" style="padding: 1.5rem; flex: 1;">
+                <h5 class="text-muted" style="margin-bottom: 0.5rem;">Exams</h5>
+                <h2 class="fw-bold text-primary" style="margin-bottom: 0;">@ViewBag.Exams</h2>
             </div>
+            <a asp-action="Exams" class="stat-bottom-btn text-decoration-none">Manage Exams</a>
         </div>
-        <div class="col-md-3 mb-4">
-            <div class="card stat-card shadow-sm border-0 text-center">
-                <div class="card-body">
-                    <h5 class="text-muted">AI Insights</h5>
-                    <h2 class="fw-bold text-primary">AI</h2>
-                    <a asp-controller="Insights" asp-action="Index" class="stretched-link text-decoration-none">Open Insights</a>
-                </div>
+        <div class="stat-card text-center" style="padding: 0; display: flex; flex-direction: column;">
+            <div class="card-body" style="padding: 1.5rem; flex: 1;">
+                <h5 class="text-muted" style="margin-bottom: 0.5rem;">AI Insights</h5>
+                <h2 class="fw-bold text-primary" style="margin-bottom: 0;">Analyze</h2>
             </div>
+            <a asp-controller="Insights" asp-action="Index" class="stat-bottom-btn text-decoration-none">Open Insights</a>
+        </div>
+        <div class="stat-card text-center" style="padding: 0; display: flex; flex-direction: column;">
+            <div class="card-body" style="padding: 1.5rem; flex: 1;">
+                <h5 class="text-muted" style="margin-bottom: 0.5rem;">Subscription</h5>
+                @if (Model.SubscriptionExpiry.HasValue && Model.SubscriptionExpiry.Value > DateTime.UtcNow)
+                {
+                    <h2 class="fw-bold text-success" style="margin-bottom: 0;">@((Model.SubscriptionExpiry.Value - DateTime.UtcNow).Days) Days</h2>
+                }
+                else
+                {
+                    <h2 class="fw-bold text-danger" style="margin-bottom: 0;">Expired</h2>
+                }
+            </div>
+            <a asp-action="Subscription" class="stat-bottom-btn text-decoration-none">Manage Plan</a>
         </div>
     </div>
 </div>

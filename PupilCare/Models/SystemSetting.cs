@@ -35,6 +35,9 @@ namespace PupilCare.Models
         
         public string CertificationInfo { get; set; } = string.Empty;
 
+        [DataType(DataType.MultilineText)]
+        public string DefaultAiPrompt { get; set; } = "You are an educational analyst for PupilCare, a school management system in Bangladesh.\nYou have been given structured data about: {ScopeLabel}\nInsight Scope: {InsightScope}\n\nData:\n{Data}\n\nPlease provide a comprehensive analysis with the following sections:\n1. **Overall Summary** - Key statistics and general performance overview\n2. **Strengths** - Notable positives observed in the data\n3. **Areas of Concern** - Issues that need attention (poor attendance, low marks, behavioral patterns)\n4. **Actionable Recommendations** - Specific steps teachers or admin should take\n\nBe empathetic, professional, and constructive. Keep the response focused and practical.";
+
         public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
     }
 }

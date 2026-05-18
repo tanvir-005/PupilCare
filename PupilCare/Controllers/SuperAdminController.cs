@@ -265,6 +265,7 @@ namespace PupilCare.Controllers
             settings.PrivacyPolicy = model.PrivacyPolicy;
             settings.TermsAndConditions = model.TermsAndConditions;
             settings.CertificationInfo = model.CertificationInfo;
+            settings.DefaultAiPrompt = model.DefaultAiPrompt;
             settings.FacebookUrl = model.FacebookUrl;
             settings.TwitterUrl = model.TwitterUrl;
             settings.LinkedInUrl = model.LinkedInUrl;

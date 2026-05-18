@@ -10,18 +10,7 @@
         <a class="nav-link text-dark" style="color: var(--color-primary-dark); font-weight: 600;" asp-controller="Auth" asp-action="Profile">
             Hello, @(user?.FullName ?? User.Identity?.Name)!
         </a>
-        @if (User.IsInRole("SuperAdmin"))
-        {
-            <a class="btn btn-info btn-sm" asp-controller="SuperAdmin" asp-action="Dashboard">Dashboard</a>
-        }
-        else if (User.IsInRole("SchoolAdmin"))
-        {
-            <a class="btn btn-info btn-sm" asp-controller="SchoolAdmin" asp-action="Dashboard">Dashboard</a>
-        }
-        else if (User.IsInRole("Teacher"))
-        {
-            <a class="btn btn-info btn-sm" asp-controller="Teacher" asp-action="Dashboard">Dashboard</a>
-        }
+
         <form class="form-inline" asp-controller="Auth" asp-action="Logout" method="post">
             <button type="submit" class="btn btn-secondary btn-sm">Logout</button>
         </form>

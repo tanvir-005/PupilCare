@@ -81,7 +81,16 @@
                         </div>
                     </div>
 
-                    <div class="form-section">
+                    <div class="form-section full-width mt-4">
+                        <h6 class="section-title">AI Settings</h6>
+                        <div class="form-group">
+                            <label asp-for="DefaultAiPrompt">Default AI Prompt Template</label>
+                            <textarea asp-for="DefaultAiPrompt" class="form-control" rows="8"></textarea>
+                            <small class="form-text text-muted">Use {ScopeLabel}, {InsightScope}, and {Data} placeholders. This will be the default prompt used for generating insights.</small>
+                        </div>
+                    </div>
+
+                    <div class="form-section mt-4">
                         <h6 class="section-title">Social Links</h6>
                         <div class="form-group">
                             <label asp-for="FacebookUrl">Facebook URL</label>

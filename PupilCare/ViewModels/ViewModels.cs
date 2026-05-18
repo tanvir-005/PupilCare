@@ -273,10 +273,11 @@ namespace PupilCare.ViewModels
     public class GenerateInsightViewModel
     {
         [Required] public string InsightScope { get; set; } = string.Empty;
-        public int? StudentId { get; set; }
+        public System.Collections.Generic.List<int> StudentIds { get; set; } = new();
         public int? ClassLevelId { get; set; }
         public int? ClassSectionId { get; set; }
-        public int? SubjectId { get; set; }
+        public System.Collections.Generic.List<int> SubjectIds { get; set; } = new();
+        public string? CustomPrompt { get; set; }
     }
 
     // ── Subscription ──────────────────────────────────────────────────────────
