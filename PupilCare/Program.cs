@@ -9,9 +9,12 @@ using PupilCare.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ── Database (In-Memory) ──────────────────────────────────────────────────────
+// ── Database (SQLite) ─────────────────────────────────────────────────────────
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? "Data Source=pupilcare.db";
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseInMemoryDatabase("PupilCareDb"));
+    options.UseSqlite(connectionString));
 
 // ── Identity ──────────────────────────────────────────────────────────────────
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
@@ -46,6 +49,8 @@ var app = builder.Build();
 // ── Seed Data ─────────────────────────────────────────────────────────────────
 using (var scope = app.Services.CreateScope())
 {
+    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    await context.Database.EnsureCreatedAsync();
     await DbSeeder.SeedAsync(scope.ServiceProvider);
 }
 
